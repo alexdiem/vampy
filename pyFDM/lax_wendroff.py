@@ -65,10 +65,11 @@ class LaxWendroff(object):
     def solve(self, inlet_bc, outlet_bc, cfl_condition, F, S, in_args,
                   out_args, cfl_args, F_args, S_args):
         for i in range(1,nt):
+            U_prev = U[:,i-1,:]
             # inlet boundary condition
-            U[:,i,0] = inlet_bc(in_args)
+            U[:,i,0] = inlet_bc(U_prev, in_args)
             # outlet boundary condition
-            U[:,i,-1] = outlet_bc(out_args)
+            U[:,i,-1] = outlet_bc(U_prev, out_args)
             
             for j in range(1,nx-1):
                 U_prev = U[:,i-1,j-1:j+2]
@@ -79,12 +80,12 @@ class LaxWendroff(object):
                 U[:,i,j] = lax_wendroff(self, U_prev, F_prev, S_prev, F_args,
                             S_args)
                 
-                if cfl_condition(cfl_args) == False:
+                if cfl_condition(U[:,i,j], cfl_args) == False:
                     raise ValueError("CFL condition not fulfilled\nReduce time step size.")
                     sys.exit(1)   
                     
                     
-    def lax_wendroff(self, U_prev, F_prev, S_prev, lw_args):
+    def lax_wendroff(self, U_prev, F_prev, S_prev, F_args, S_args):
         # u_prev = [U[m-1], U[m], U[m+1]], F_prev, S_prev analogously
         U_np_mp = (U_prev[:,2]+U_prev[:,1])/2 + self.dt/2 *\
                     (-(F_prev[:,2]-F_prev[:,1])/self.dx +\
