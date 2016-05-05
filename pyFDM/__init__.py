@@ -1,2 +1,1 @@
-__all__ = ['lax_wendroff']
-from lax_wendroff import *
+__all__ = ['lax_wendroff', 'utils']
