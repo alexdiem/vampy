@@ -20,13 +20,13 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.0.0',
+    version='1.0.0',
 
     description="""A python package to solve partial differential equations using finite difference methods (FDM).""",
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://bitbucket.org/akdiem/pyFDM',
+    url='https://github.com/akdiem/pyFDM',
 
     # Author details
     author='Alexandra K. Diem',
@@ -44,7 +44,9 @@ setup(
         'Development Status :: 3 - Alpha',
 
         # Indicate who your project is intended for
+        'Intended Audience :: Education',
         'Intended Audience :: Private',
+        'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering',
         'Topic :: Scientific/Engineering :: Mathematics',
 
@@ -63,7 +65,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='partial-differential-equations pde lax-wendroff',
+    keywords='partial-differential-equations pde lax-wendroff finite-difference fdm',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().

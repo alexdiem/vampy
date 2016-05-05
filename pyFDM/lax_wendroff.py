@@ -61,45 +61,38 @@ class LaxWendroff(object):
     def ir(self, value): 
         self._ir = value
         
-        
-    @property   
-    def U0(self):
-        return self._U0
-        
-        
-    @U0.setter
-    def U0(self, value): 
-        self._U0 = value
-    
-    
+
     def __init__(self, nt, nx, dt, dx, init_cond, ntr=100):
         self._nt = int(nt)
         self._nx = int(nx)
         self._dt = dt
         self._dx = dx
-        self._dtr = nt*dt/ntr
+        self._dtr = nt*dt/(ntr-1)
         self._U = np.zeros((2, ntr, nx))
-        self._ir = 0
+        self._ir = 1
         self._init_cond = init_cond
-        self._U0 = np.zeros((2,nx))
         
         
     def initial_conditions(self):
+        U0 = np.zeros((2,self.nx))
         N = len(self.init_cond)
         # check that we're dealing with 2 equations
         if N != 2:
             raise ValueError("%d initial conditions supplied, 2 expected."\
                         % (N))
         for i in range(N):
-            self.U0[i,:] = self.init_cond[i]
-        return self.U0
+            U0[i,:] = self.init_cond[i]
+        return U0
      
      
     def solve(self, inlet_bc, outlet_bc, cfl_condition, F, S, in_args,
                   out_args, cfl_args, F_args, S_args):
-        U1 = np.zeros((2,self.nx))
-        U0 = self.U0
+        # U0: previous timestep, U1 current timestep
+        U0 = self.initial_conditions()
+        np.copyto(self.U[:,0,:], U0)
+        
         for i in range(1,self.nt):
+            U1 = np.zeros((2,self.nx))
             t = i * self.dt
             # inlet boundary condition
             U1[:,0] = inlet_bc(U0, t, in_args)
@@ -108,7 +101,7 @@ class LaxWendroff(object):
             
             for j in range(1,self.nx-1):
                 U_prev = U0[:,j-1:j+2]
-                if len(U_prev[0,:] == 2):
+                if len(U_prev[0,:]) == 2:
                     U_prev = U0[:,j-1:]
                 F_prev = F(U_prev, F_args)
                 S_prev = S(U_prev, S_args)
@@ -116,10 +109,12 @@ class LaxWendroff(object):
                             F_args, S_args)
                 
                 if cfl_condition(U1[:,j], cfl_args) == False:
-                    raise ValueError("CFL condition not fulfilled\nReduce time step size.")
-                    sys.exit(1)   
-            if abs(t - self.dtr*i) < self.dt:
-                np.copyto(U[:,self.ir,:], U1)
+                    raise ValueError(
+                        "CFL condition not fulfilled at time step %d, \
+position %d.\nReduce time step size." % (i,j))
+                    sys.exit(1)
+            if abs(t - self.dtr*self.ir) < self.dt:
+                np.copyto(self.U[:,self.ir,:], U1)
                 self.ir += 1
             np.copyto(U0, U1)
         return self.U
@@ -137,6 +132,7 @@ class LaxWendroff(object):
         F_np_mm = F(U_np_mm, F_args)
         S_np_mp = S(U_np_mp, S_args)
         S_np_mm = S(U_np_mm, S_args)
+        
         U_np = U_prev[:,1] - self.dt/self.dx * (F_np_mp-F_np_mm) + self.dt/2 *\
                 (S_np_mp+S_np_mm)
         return U_np
