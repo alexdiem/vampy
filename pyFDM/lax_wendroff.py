@@ -5,6 +5,8 @@ from __future__ import division
 import numpy as np
 from scipy.interpolate import interp1d
 
+from blood_flow import *
+
 
 class LaxWendroff(object):
     """
@@ -90,8 +92,10 @@ class LaxWendroff(object):
         # U0: previous timestep, U1 current timestep
         U0 = self.initial_conditions()
         np.copyto(self.U[:,0,:], U0)
+        i = 1
         
-        for i in range(1,self.nt):
+        while i < self.nt:
+            i += 1
             U1 = np.zeros((2,self.nx))
             t = i * self.dt
             # inlet boundary condition
