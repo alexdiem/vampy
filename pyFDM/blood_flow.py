@@ -9,26 +9,45 @@ def extrapolate(x0, x, y):
 
 def wave_speed(a, beta, rho):
     return np.sqrt(beta*np.sqrt(a)/(2*rho))
-              
+    
+    
+def bifurcation_system(u_prev):
+    F = np.zeros(6)
+    F[0] = calculate_characteristic(u_prev[0,0], u_prev[1,0:2], u_prev[1,0],
+                                   beta, rho, dt, x[0:2])
+    
+    
+def jacobian(A_p, u_p, A_1, u_1, A_2, u_2):
+    J = np.zeros((6,6))
+    J[0,:] = [-1, -A_p**(-3/4) * np.sqrt(beta_p/2/rho), 0, 0, 0, 0]
+    J[1,:] = [0, 0, -1, A_1**(-3/4) * np.sqrt(beta_1/2/rho), 0, 0]
+    J[2,:] = [0, 0, 0, 0, -1, A_2**(-3/4) * np.sqrt(beta_2/2/rho)]
+    J[3,:] = [A_p, u_p, -A_1, -u_1, -A_2, -u_2]
+    J[4,:] = [rho*u_p, beta_p/2*A_p**(-1/2), -rho*u_1, -beta_1/2*A_1**(-1/2),\
+                0, 0]
+    J[5,:] = [rho*u_p, beta_p/2*A_p**(-1/2), 0, 0, -rho*u_2,\
+                -beta_2/2*A_2**(-1/2)]
+    return J
+    
 
 def inlet_bc(u_prev, t, (u_in, beta, rho, x, dt)):
-    c_prev = wave_speed(u_prev[0,0], beta, rho)
-    w_prev = u_prev[1,0:2] - 4*c_prev
-    lam_2 = u_prev[1,0] - c_prev
-    x_0 = x[0] - lam_2 * dt
-    w_2 = extrapolate(x_0, x[0:2], w_prev)
+    w_2 = calculate_characteristic(u_prev[0,0], u_prev[1,0:2], u_prev[1,0],
+                                   beta, rho, dt, x[0:2])
     a_in = (u_in(t) - w_2)**4 / 64 * (rho/beta)**2
     return np.array([a_in, u_in(t)])
      
     
 def outlet_bc(u_prev, t, (a_out, beta, rho, x, dt)):
-    c_prev = wave_speed(u_prev[0,-1], beta, rho)
-    w_prev = u_prev[1,-2:] + 4*c_prev
-    lam_1 = u_prev[1,-1] + c_prev
-    x_l = x[-1] - lam_1 * dt
-    w_1 = extrapolate(x_l, x[-2:], w_prev)
+    w_1 = calculate_characteristic(u_prev[0,-1], u_prev[1,-2:], u_prev[1,-1],
+                                   beta, rho, dt, x[-2:])
     u_out = w_1 - 4*a_out**(1/4) * np.sqrt(beta/(2*rho))
     return np.array([a_out, u_out])
+    
+    
+def bifurcation_bc(p, d1, d2):
+    uprev_p = p.get_uprev()
+    F = bifurcation_system(u_prev)
+    return 
         
     
 def cfl_condition(u, (beta, rho, dt, dx)):
@@ -38,14 +57,3 @@ def cfl_condition(u, (beta, rho, dt, dx)):
     right = np.power(np.absolute(v), -1)
     #print left, right
     return False if (left > right).any() else True
-        
-    
-def F(U, (beta, A0, rho)):
-    a, u = U
-    p = beta * (np.sqrt(a)-np.sqrt(A0))
-    return np.array([a*u, np.power(u,2) + p/rho])
-        
-    
-def S(U, (mu, rho)):
-    a, u = U
-    return np.array([u*0, -8*np.pi*mu/rho * u/a])

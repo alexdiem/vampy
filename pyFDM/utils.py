@@ -39,3 +39,22 @@ def read_config(fname):
     # Simulation 
     sim = get_numbers_section(config, 'Simulation')
     return files, arteries, sim
+
+
+def read_csv(fname):
+    f = open(fname, 'r')
+    lines = f.readlines()
+    f.close()
+    u = []
+    t = []    
+    for l in lines:
+        data = l.split(',')
+        t.append(float(data[0]))
+        u.append(float(data[1]))
+    return u, t
+    
+    
+def periodic(t, T):
+    while t/T > 1.0:
+        t = t - T
+    return t
