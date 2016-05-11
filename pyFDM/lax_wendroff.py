@@ -5,6 +5,9 @@ from __future__ import division
 import numpy as np
 from scipy.interpolate import interp1d
 
+from blood_flow import *
+import utils
+
 
 class LaxWendroff(object):
     """
@@ -12,112 +15,31 @@ class LaxWendroff(object):
     """
     
     
-    @property   
-    def nt(self):
-        return self._nt
-        
-        
-    @property   
-    def nx(self):
-        return self._nx
-        
-        
-    @property   
-    def dt(self):
-        return self._dt
-        
-        
-    @property   
-    def dx(self):
-        return self._dx
-        
-        
-    @property   
-    def dtr(self):
-        return self._dtr
-        
-        
-    @property   
-    def init_cond(self):
-        return self._init_cond
-        
-        
-    @property   
-    def U(self):
-        return self._U
-        
-        
-    @U.setter
-    def U(self, value): 
-        self._U = value
-        
-        
-    @property   
-    def ir(self):
-        return self._ir
-        
-        
-    @ir.setter
-    def ir(self, value): 
-        self._ir = value
-        
-
-    def __init__(self, nt, nx, dt, dx, init_cond, ntr=100):
-        self._nt = int(nt)
+    def __init__(self, nx, dx):
         self._nx = int(nx)
-        self._dt = dt
         self._dx = dx
-        self._dtr = nt*dt/(ntr-1)
-        self._U = np.zeros((2, ntr, nx))
-        self._ir = 1
-        self._init_cond = init_cond
         
         
-    def initial_conditions(self):
-        U0 = np.zeros((2,self.nx))
-        N = len(self.init_cond)
-        # check that we're dealing with 2 equations
-        if N != 2:
-            raise ValueError("%d initial conditions supplied, 2 expected."\
-                        % (N))
-        for i in range(N):
-            U0[i,:] = self.init_cond[i]
-        return U0
-     
-     
-    def solve(self, inlet_bc, outlet_bc, cfl_condition, F, S, in_args,
-                  out_args, cfl_args, F_args, S_args):
+    def solve(self, U0, U_in, U_out, t, T, cfl_condition, F, S, cfl_args,
+              F_args, S_args):
         # U0: previous timestep, U1 current timestep
-        U0 = self.initial_conditions()
-        np.copyto(self.U[:,0,:], U0)
-        
-        for i in range(1,self.nt):
-            U1 = np.zeros((2,self.nx))
-            t = i * self.dt
-            # inlet boundary condition
-            U1[:,0] = inlet_bc(U0, t, in_args)
-            # outlet boundary condition
-            U1[:,-1] = outlet_bc(U0, t, out_args)
+        U1 = np.zeros((2,self.nx))
             
-            for j in range(1,self.nx-1):
-                U_prev = U0[:,j-1:j+2]
-                if len(U_prev[0,:]) == 2:
-                    U_prev = U0[:,j-1:]
-                F_prev = F(U_prev, F_args)
-                S_prev = S(U_prev, S_args)
-                U1[:,j] = self.lax_wendroff(U_prev, F_prev, S_prev, F, S,
-                            F_args, S_args)
-                
-                if cfl_condition(U1[:,j], cfl_args) == False:
-                    raise ValueError(
-                        "CFL condition not fulfilled at time step %d, \
-position %d.\nReduce time step size." % (i,j))
-                    sys.exit(1)
-            if abs(t - self.dtr*self.ir) < self.dt:
-                np.copyto(self.U[:,self.ir,:], U1)
-                self.ir += 1
-            np.copyto(U0, U1)
-        return self.U
+        if cfl_condition(U1[:,0], cfl_args) == False:
+            raise ValueError(
+                    "CFL condition not fulfilled at time step %d. Reduce \
+time step size." % (i))
+            sys.exit(1)
+            
+        for j in range(1,self.nx-1):
+            U_prev = U0[:,j-1:j+2]
+            if len(U_prev[0,:]) == 2:
+                U_prev = U0[:,j-1:]
+            F_prev = F(U_prev, F_args)
+            S_prev = S(U_prev, S_args)
+            U1[:,j] = self.lax_wendroff(U_prev, F_prev, S_prev, F, S,
+                                        F_args, S_args)
+        return U1
                     
                     
     def lax_wendroff(self, U_prev, F_prev, S_prev, F, S, F_args, S_args):
@@ -138,3 +60,11 @@ position %d.\nReduce time step size." % (i,j))
         return U_np
         
         
+    @property   
+    def nx(self):
+        return self._nx
+        
+        
+    @property   
+    def dx(self):
+        return self._dx

@@ -5,7 +5,7 @@ def get_strings_section(config, section):
     options = config.options(section)
     section_dict = {}    
     for option in options:
-        param[option] = config.get(section, option)
+        section_dict[option] = config.get(section, option)
     return section_dict
 
 
@@ -13,10 +13,10 @@ def get_numbers_section(config, section):
     options = config.options(section)
     section_dict = {}    
     for option in options:
-        if option == "nx":
-            param[option] = config.getint(section, option)
+        if option == "nx" or option == "tc":
+            section_dict[option] = config.getint(section, option)
         else:
-            param[option] = config.getfloat(section, option)
+            section_dict[option] = config.getfloat(section, option)
     return section_dict
     
 
@@ -28,7 +28,8 @@ def read_config(fname):
     
     :param fname: Filename of the configuration file.
     """
-    config = ConfigParser.RawConfigParser()
+    config = ConfigParser.SafeConfigParser()
+    config.optionxform = str 
     config.read(fname)
     # Files
     files = get_strings_section(config, 'Files')
@@ -38,3 +39,22 @@ def read_config(fname):
     # Simulation 
     sim = get_numbers_section(config, 'Simulation')
     return files, arteries, sim
+
+
+def read_csv(fname):
+    f = open(fname, 'r')
+    lines = f.readlines()
+    f.close()
+    u = []
+    t = []    
+    for l in lines:
+        data = l.split(',')
+        t.append(float(data[0]))
+        u.append(float(data[1]))
+    return u, t
+    
+    
+def periodic(t, T):
+    while t/T > 1.0:
+        t = t - T
+    return t
