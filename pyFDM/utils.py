@@ -58,3 +58,7 @@ def periodic(t, T):
     while t/T > 1.0:
         t = t - T
     return t
+    
+    
+def extrapolate(x0, x, y):
+    return y[0] + (y[1]-y[0]) * (x0 - x[0])/(x[1] - x[0])
