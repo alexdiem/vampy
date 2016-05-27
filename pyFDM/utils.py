@@ -1,4 +1,5 @@
 import ConfigParser
+import matplotlib.pylab as plt
 
 
 def get_strings_section(config, section):
@@ -62,3 +63,22 @@ def periodic(t, T):
     
 def extrapolate(x0, x, y):
     return y[0] + (y[1]-y[0]) * (x0 - x[0])/(x[1] - x[0])
+    
+    
+def plot(x, y, fname, xlabel, ylabel):
+    plt.figure(figsize=(10,6))
+    s = x.shape
+    if x.ndim == 1:
+        plt.plot(x, y, lw=2)
+    elif s[0] < s[1]:
+        for i in range(s[0]):
+            plt.plot(x[i,:], y, lw=2)
+    else:
+        for i in range(s[1]):
+            plt.plot(x[:,i], y, lw=2)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend()
+    #plt.show()
+    plt.savefig(fname, dpi=600, bbox_inches='tight')
+    
