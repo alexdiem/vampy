@@ -5,9 +5,6 @@ from __future__ import division
 import numpy as np
 import sys
 
-from lax_wendroff import LaxWendroff
-import blood_flow
-import utils
 
 class Artery(object):
     """
@@ -30,29 +27,23 @@ class Artery(object):
             raise ValueError('No elasticity parameter specified')
         self._rho = rho
         self._mu = mu
-        self._ntr = kwargs['ntr']
+        self._i = 0
         
         
-    def initial_conditions(self, u0):
+    def initial_conditions(self, u0, ntr):
         if not hasattr(self, '_x'):
             raise AttributeError('Artery not meshed. mesh(self, nx) has to be \
 executed first')
+        self.U = np.zeros((2, ntr, len(self.x)))
         self.U0 = np.zeros((2,len(self.x)))
         self.U0[0,:] = self.A0
         self.U0[1,:] = u0
-        self.U = np.zeros((2, self.ntr, self.nx))
         
         
     def mesh(self, nx):
+        self._nx = nx
         self._x = np.linspace(0.0, self.L, nx)
         self._dx = self.x[1] - self.x[0]
-        
-        
-    def set_time(self, nt, dt, T=0.0):
-        self._nt = nt
-        self._dt = dt
-        self._dtr = nt*dt/(self.ntr-1)
-        self._T = T
         
         
     def get_uprev(self):
@@ -79,11 +70,15 @@ executed first')
         return np.array([u*0, -8*np.pi*self.mu/self.rho * u/a])
         
         
-    def solve(self, U_in, U_out, u0, p_out, T):
+    def solve(self, lw, U_in, U_out, t, dt, dtr, cfl_condition):
         # solve for current timestep
-        U1 = lw.solve(self.U0, U_in, U_out, self.t, self.T,
-                      self.cfl_condition, self.F, self.S, self.dt)
-        return self.U[0,:,:], self.U[1,:,:]
+        U1 = lw.solve(self.U0, U_in, U_out, t, cfl_condition, self.F,
+                        self.S, dt, dx=self.dx, wave_speed=self.wave_speed)
+        np.copyto(self.U0, U1)
+        if abs(t - dtr*self.i) < dt:
+                np.copyto(self.U[:,self.i,:], U1)
+                self.i += 1
+        return U1
         
     
     @property
@@ -134,6 +129,21 @@ executed first')
     @property
     def dx(self):
         return self._dx
+
+
+    @property
+    def nx(self):
+        return self._nx
+        
+        
+    @property
+    def U0(self):
+        return self._U0
+        
+        
+    @U0.setter
+    def U0(self, value): 
+        self._U0 = value
         
         
     @property
@@ -147,10 +157,10 @@ executed first')
         
         
     @property
-    def U0(self):
-        return self._U0
+    def i(self):
+        return self._i
         
         
-    @U0.setter
-    def U0(self, value): 
-        self._U0 = value
+    @i.setter
+    def i(self, value): 
+        self._i = value

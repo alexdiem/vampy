@@ -21,7 +21,7 @@ class LaxWendroff(object):
         self._dx = dx
         
         
-    def solve(self, U0, U_in, U_out, t, T, cfl_condition, F, S, dt,
+    def solve(self, U0, U_in, U_out, t, cfl_condition, F, S, dt,
               **kwargs):
         # U0: previous timestep, U1 current timestep
         U1 = np.zeros((2,self.nx))
@@ -37,7 +37,7 @@ class LaxWendroff(object):
             F_prev = F(U_prev)
             S_prev = S(U_prev)
             U1[:,j] = self.lax_wendroff(U_prev, F_prev, S_prev, F, S, dt)
-            if cfl_condition(U1[:,j]) == False:
+            if cfl_condition(U1[:,j], dt, **kwargs) == False:
                 raise ValueError(
                     "CFL condition not fulfilled at time %e. Reduce \
 time step size." % (t))
