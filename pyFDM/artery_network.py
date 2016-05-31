@@ -51,12 +51,13 @@ class ArteryNetwork(object):
             artery.mesh(nx)
             
     
-    def set_time(self, nt, dt, T=0.0):
+    def set_time(self, nt, dt, T=0.0, tc=1):
         self._nt = nt
         self._dt = dt
         self._tf = nt * dt
         self._dtr = nt*dt/(self.ntr-1)
         self._T = T
+        self._tc = tc
             
             
     def timestep(self):
@@ -103,8 +104,15 @@ class ArteryNetwork(object):
     
     def solve(self, u0, u_in, p_out, T):
         # solution list holds numpy arrays of solution
+        tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
+        i = 0
         while self.t < self.tf:
+            save = False            
             
+            if (self.t == self.tf) or (i < self.ntr and abs(self.t - tr[i]) < self.dtr):
+                save = True
+                i += 1
+                
             for artery in self.arteries:
                 nx = len(artery.x)
                 lw = LaxWendroff(nx, artery.dx)
@@ -126,12 +134,11 @@ class ArteryNetwork(object):
                     #todo: bifurcation outlet condition
                     pass
                 
-                artery.solve(lw, U_in, U_out, self.t, self.dt, self.dtr)
-                
+                artery.solve(lw, U_in, U_out, self.t, self.dt, save, i-1)
                 if ArteryNetwork.cfl_condition(artery, self.dt) == False:
                     raise ValueError(
                             "CFL condition not fulfilled at time %e. Reduce \
-time step size." % (t))
+time step size." % (self.t))
                     sys.exit(1)                
                 
             self.timestep()
@@ -148,7 +155,7 @@ time step size." % (t))
         
         
     def time_plots(self, suffix, plot_dir, n):
-        time = np.linspace(0, self.tf, self.ntr)
+        time = np.linspace(self.tf-self.T, self.tf, self.ntr)
         for artery in self.arteries:
             artery.time_plots(suffix, plot_dir, n, time)
 
@@ -181,6 +188,11 @@ time step size." % (t))
     @property
     def T(self):
         return self._T
+        
+        
+    @property
+    def tc(self):
+        return self._tc
         
         
     @property

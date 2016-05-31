@@ -28,7 +28,6 @@ class Artery(object):
             raise ValueError('No elasticity parameter specified')
         self._rho = rho
         self._mu = mu
-        self._i = 0
         
         
     def initial_conditions(self, u0, ntr):
@@ -71,13 +70,12 @@ executed first')
         return np.array([u*0, -8*np.pi*self.mu/self.rho * u/a])
         
     
-    def solve(self, lw, U_in, U_out, t, dt, dtr):
+    def solve(self, lw, U_in, U_out, t, dt, save, i):
         # solve for current timestep
         U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt)
         np.copyto(self.U0, U1)
-        if abs(t - dtr*self.i) < dt:
-                np.copyto(self.U[:,self.i,:], U1)
-                self.i += 1
+        if save:
+            np.copyto(self.U[:,i,:], U1)
         return U1
         
         
@@ -114,19 +112,6 @@ executed first')
                         fname)
             
             
-    #def time_plots(self, suffix, plot_dir, n, time):
-    #    print self.U[1,:,0]
-    #    fname = "plots/ut_test.png"
-    #    plt.figure(figsize=(10,6))
-    #    #for t in ts: 
-    #    plt.plot(time, self.U[1,:,0], label=0, lw=2)
-    #    plt.xlabel("t")
-    #    plt.ylabel("m/s")
-    #    plt.legend()
-    #    #plt.show()
-    #    plt.savefig(fname, dpi=600, bbox_inches='tight')
-                    
-        
     @staticmethod            
     def plot(suffix, plot_dir, x, y, labels, xlabel, ylabel, fname):
         plt.figure(figsize=(10,6))
@@ -213,13 +198,3 @@ executed first')
     @U.setter
     def U(self, value): 
         self._U = value
-        
-        
-    @property
-    def i(self):
-        return self._i
-        
-        
-    @i.setter
-    def i(self, value): 
-        self._i = value
