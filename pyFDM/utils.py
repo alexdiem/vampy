@@ -42,15 +42,16 @@ def read_config(fname):
     return files, arteries, sim
 
 
-def read_csv(fname):
+def read_csv(fname, T):
     f = open(fname, 'r')
     lines = f.readlines()
     f.close()
     u = []
     t = []    
+    nt = len(lines)
     for l in lines:
         data = l.split(',')
-        t.append(float(data[0]))
+        t.append(float(data[0])/(nt-1)*T)
         u.append(float(data[1]))
     return u, t
     

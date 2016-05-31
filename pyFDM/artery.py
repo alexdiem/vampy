@@ -4,6 +4,7 @@ from __future__ import division
 
 import numpy as np
 import sys
+import matplotlib.pylab as plt
 
 
 class Artery(object):
@@ -69,16 +70,74 @@ executed first')
         a, u = U
         return np.array([u*0, -8*np.pi*self.mu/self.rho * u/a])
         
-        
-    def solve(self, lw, U_in, U_out, t, dt, dtr, cfl_condition):
+    
+    def solve(self, lw, U_in, U_out, t, dt, dtr):
         # solve for current timestep
-        U1 = lw.solve(self.U0, U_in, U_out, t, cfl_condition, self.F,
-                        self.S, dt, dx=self.dx, wave_speed=self.wave_speed)
+        U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt)
         np.copyto(self.U0, U1)
         if abs(t - dtr*self.i) < dt:
                 np.copyto(self.U[:,self.i,:], U1)
                 self.i += 1
         return U1
+        
+        
+    def dump_results(self, suffix, data_dir):
+        np.savetxt("%s/u%d_%s.csv" % (data_dir, self.pos, suffix),
+                   self.U[1,:,:], delimiter=',')
+        np.savetxt("%s/a%d_%s.csv" % (data_dir, self.pos, suffix),
+                   self.U[0,:,:], delimiter=',')   
+                   
+                   
+    def spatial_plots(self, suffix, plot_dir, n):
+        nt = len(self.U[0,:,0])        
+        skip = int(nt/n)
+        u = ['a', 'u']
+        l = ['m^2', 'm/s']
+        positions = range(0,nt-1,skip)
+        for i in range(2):
+            y = self.U[i,positions,:]
+            fname = "%s/%s%d_%s_spatial.png" % (plot_dir, u[i], self.pos, suffix)
+            Artery.plot(suffix, plot_dir, self.x, y, positions, "m", l[i],
+                        fname)
+            
+            
+    def time_plots(self, suffix, plot_dir, n, time):
+        nt = len(time)
+        skip = int(self.nx/n)
+        u = ['a', 'u']
+        l = ['m^2', 'm/s']
+        positions = range(0,self.nx-1,skip)
+        for i in range(2):
+            y = self.U[i,:,positions]
+            fname = "%s/%s%d_%s_time.png" % (plot_dir, u[i], self.pos, suffix)
+            Artery.plot(suffix, plot_dir, time, y, positions, "t", l[i],
+                        fname)
+            
+            
+    #def time_plots(self, suffix, plot_dir, n, time):
+    #    print self.U[1,:,0]
+    #    fname = "plots/ut_test.png"
+    #    plt.figure(figsize=(10,6))
+    #    #for t in ts: 
+    #    plt.plot(time, self.U[1,:,0], label=0, lw=2)
+    #    plt.xlabel("t")
+    #    plt.ylabel("m/s")
+    #    plt.legend()
+    #    #plt.show()
+    #    plt.savefig(fname, dpi=600, bbox_inches='tight')
+                    
+        
+    @staticmethod            
+    def plot(suffix, plot_dir, x, y, labels, xlabel, ylabel, fname):
+        plt.figure(figsize=(10,6))
+        s = y.shape
+        n = min(s)
+        for i in range(n):
+            plt.plot(x, y[i,:], label="%d" % (labels[i]), lw=2)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.legend()
+        plt.savefig(fname, dpi=600, bbox_inches='tight')
         
     
     @property

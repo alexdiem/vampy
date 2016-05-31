@@ -92,14 +92,15 @@ class ArteryNetwork(object):
     
     
     @staticmethod
-    def cfl_condition(u, dt, dx, wave_speed):
-        c = wave_speed(u[0])
-        v = (u[1] + c, u[1] - c)
-        left = dt/dx
+    def cfl_condition(artery, dt):
+        c = artery.wave_speed(artery.U0[0,1])
+        u = artery.U0[1,1]
+        v = (u + c, u - c)
+        left = dt/artery.dx
         right = np.power(np.absolute(v), -1)
         return False if (left > right).any() else True
             
-            
+    
     def solve(self, u0, u_in, p_out, T):
         # solution list holds numpy arrays of solution
         while self.t < self.tf:
@@ -125,17 +126,32 @@ class ArteryNetwork(object):
                     #todo: bifurcation outlet condition
                     pass
                 
-                artery.solve(lw, U_in, U_out, self.t, self.dt, self.dtr, ArteryNetwork.cfl_condition)
+                artery.solve(lw, U_in, U_out, self.t, self.dt, self.dtr)
+                
+                if ArteryNetwork.cfl_condition(artery, self.dt) == False:
+                    raise ValueError(
+                            "CFL condition not fulfilled at time %e. Reduce \
+time step size." % (t))
+                    sys.exit(1)                
                 
             self.timestep()
             
             
-    def results(self):
-        U = []
+    def dump_results(self, suffix, data_dir):
         for artery in self.arteries:
-            U.append(artery.U)
-        return U
-                        
+            artery.dump_results(suffix, data_dir)
+                       
+                       
+    def spatial_plots(self, suffix, plot_dir, n):
+        for artery in self.arteries:
+            artery.spatial_plots(suffix, plot_dir, n)
+        
+        
+    def time_plots(self, suffix, plot_dir, n):
+        time = np.linspace(0, self.tf, self.ntr)
+        for artery in self.arteries:
+            artery.time_plots(suffix, plot_dir, n, time)
+
             
     @property
     def depth(self):
