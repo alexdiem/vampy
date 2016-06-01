@@ -20,6 +20,7 @@ class ArteryNetwork(object):
         self.setup_arteries(R, a, b, lam, sigma, rho, mu, **kwargs)
         self._t = 0.
         self._ntr = kwargs['ntr']
+        self._progress = 0
         
         
     def setup_arteries(self, R, a, b, lam, sigma, rho, mu, **kwargs):
@@ -91,7 +92,6 @@ class ArteryNetwork(object):
         pass
     
     
-    
     @staticmethod
     def cfl_condition(artery, dt):
         c = artery.wave_speed(artery.U0[0,1])
@@ -142,6 +142,10 @@ time step size." % (self.t))
                     sys.exit(1)                
                 
             self.timestep()
+            
+            if self.t % 10 < self.dt:
+                print "Progress %d" % (self._progress)
+                self._progress += 10
             
             
     def dump_results(self, suffix, data_dir):

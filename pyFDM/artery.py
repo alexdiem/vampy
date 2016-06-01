@@ -83,32 +83,42 @@ executed first')
         np.savetxt("%s/u%d_%s.csv" % (data_dir, self.pos, suffix),
                    self.U[1,:,:], delimiter=',')
         np.savetxt("%s/a%d_%s.csv" % (data_dir, self.pos, suffix),
-                   self.U[0,:,:], delimiter=',')   
+                   self.U[0,:,:], delimiter=',')  
+        np.savetxt("%s/p%d_%s.csv" % (data_dir, self.pos, suffix),
+                   self.p(self.U[0,:,:]), delimiter=',') 
                    
                    
     def spatial_plots(self, suffix, plot_dir, n):
         nt = len(self.U[0,:,0])        
         skip = int(nt/n)
-        u = ['a', 'u']
-        l = ['m^2', 'm/s']
+        u = ['a', 'u', 'p']
+        l = ['m^2', 'm/s', 'Pa']
         positions = range(0,nt-1,skip)
         for i in range(2):
             y = self.U[i,positions,:]
             fname = "%s/%s%d_%s_spatial.png" % (plot_dir, u[i], self.pos, suffix)
             Artery.plot(suffix, plot_dir, self.x, y, positions, "m", l[i],
                         fname)
+        y = self.p(self.U[1,positions,:])
+        fname = "%s/%s%d_%s_spatial.png" % (plot_dir, u[2], self.pos, suffix)
+        Artery.plot(suffix, plot_dir, self.x, y, positions, "m", l[2],
+                        fname)
             
             
     def time_plots(self, suffix, plot_dir, n, time):
         nt = len(time)
         skip = int(self.nx/n)
-        u = ['a', 'u']
-        l = ['m^2', 'm/s']
+        u = ['a', 'u', 'p']
+        l = ['m^2', 'm/s', 'Pa']
         positions = range(0,self.nx-1,skip)
         for i in range(2):
             y = self.U[i,:,positions]
             fname = "%s/%s%d_%s_time.png" % (plot_dir, u[i], self.pos, suffix)
             Artery.plot(suffix, plot_dir, time, y, positions, "t", l[i],
+                        fname)
+        y = self.p(self.U[1,:,positions])
+        fname = "%s/%s%d_%s_time.png" % (plot_dir, u[2], self.pos, suffix)
+        Artery.plot(suffix, plot_dir, time, y, positions, "m", l[2],
                         fname)
             
             
