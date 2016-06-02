@@ -18,14 +18,8 @@ class Artery(object):
         self._R = R
         self._A0 = np.pi*R**2
         self._L = R*lam
-        if 'k' in kwargs.keys():
-            self._k = kwargs['k']
-            self._Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
-            self._beta = np.sqrt(np.pi)*self.Ehr*R/(self.A0 * (1-sigma)**2)
-        elif 'beta' in kwargs.keys():
-            self._beta = kwargs['beta']  
-        else:
-            raise ValueError('No elasticity parameter specified')
+        self._k = kwargs['k']
+        self._Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
         self._rho = rho
         self._mu = mu
         
@@ -51,11 +45,12 @@ executed first')
     
     
     def p(self, a):
-        return self.beta * (np.sqrt(a)-np.sqrt(self.A0))
+        return 4*self.Ehr * (1 - np.sqrt(a *self.A0))/3
         
         
     def wave_speed(self, a):
-        return np.sqrt(self.beta*np.sqrt(a)/(2*self.rho))
+        return np.sqrt(a/self.rho * 4*self.Ehr/3 *\
+                self.A0/(2*np.sqrt(self.A0*a)))
     
     
     #def F(self, U, **kwargs):
@@ -110,8 +105,8 @@ executed first')
     def spatial_plots(self, suffix, plot_dir, n):
         nt = len(self.U[0,:,0])        
         skip = int(nt/n)
-        u = ['a', 'u', 'p']
-        l = ['m^2', 'm/s', 'Pa']
+        u = ['a', 'q', 'p']
+        l = ['m^2', 'm^3/s', 'Pa']
         positions = range(0,nt-1,skip)
         for i in range(2):
             y = self.U[i,positions,:]
@@ -183,11 +178,6 @@ executed first')
     @property
     def Ehr(self):
         return self._Ehr
-        
-        
-    @property
-    def beta(self):
-        return self._beta
         
         
     @property

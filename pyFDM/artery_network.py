@@ -67,12 +67,8 @@ class ArteryNetwork(object):
     
     @staticmethod        
     def inlet_bc(artery, u_prev, u_in, dt):
-        c_prev = artery.wave_speed(u_prev[0,0])
-        w_prev = u_prev[1,0:2] - 4*c_prev
-        lam_2 = u_prev[1,0] - c_prev
-        x_0 = artery.x[0] - lam_2 * dt
-        w_2 = utils.extrapolate(x_0, artery.x[0:2], w_prev)
-        a_in = (u_in - w_2)**4 / 64 * (artery.rho/artery.beta)**2
+        q0 = u_in(0.0)
+        q12 = u_in(dt/2)
         return np.array([a_in, u_in])
      
     
@@ -94,8 +90,9 @@ class ArteryNetwork(object):
     
     @staticmethod
     def cfl_condition(artery, dt):
-        c = artery.wave_speed(artery.U0[0,1])
-        u = artery.U0[1,1]
+        a = artery.U0[0,1]
+        c = artery.wave_speed(a)
+        u = a / artery.U0[1,1]
         v = (u + c, u - c)
         left = dt/artery.dx
         right = np.power(np.absolute(v), -1)
