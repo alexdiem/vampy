@@ -19,9 +19,9 @@ class Artery(object):
         self._A0 = np.pi*R**2
         self._L = R*lam
         if 'k' in kwargs.keys():
-            k = kwargs['k']
-            Ehr = k[0] * np.exp(k[1]*R) + k[2]
-            self._beta = np.sqrt(np.pi)*Ehr*R/(self.A0 * (1-sigma)**2)
+            self._k = kwargs['k']
+            self._Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
+            self._beta = np.sqrt(np.pi)*self.Ehr*R/(self.A0 * (1-sigma)**2)
         elif 'beta' in kwargs.keys():
             self._beta = kwargs['beta']  
         else:
@@ -58,21 +58,40 @@ executed first')
         return np.sqrt(self.beta*np.sqrt(a)/(2*self.rho))
     
     
+    #def F(self, U, **kwargs):
+    #    a, u = U
+    #    p = self.p(a)
+    #    return np.array([a*u, np.power(u,2) + p/self.rho])
+        
+    
+    #def S(self, U, **kwargs):
+    #    a, u = U
+    #    return np.array([u*0, -8*np.pi*self.mu/self.rho * u/a])
+        
+        
     def F(self, U, **kwargs):
-        a, u = U
-        p = self.p(a)
-        f = np.array([a*u, np.power(u,2) + p/self.rho])
-        return np.array([a*u, np.power(u,2) + p/self.rho])
+        a, q = U
+        f = 4/3 * self.Ehr
+        return np.array([q, np.power(q,2)/a + f/self.rho * np.sqrt(self.A0*a)])
         
-    
+        
     def S(self, U, **kwargs):
-        a, u = U
-        return np.array([u*0, -8*np.pi*self.mu/self.rho * u/a])
+        a, q = U
+        delta = np.sqrt(self.mu*kwargs['T']/(self.rho*2*np.pi))
+        f = 4/3 * self.Ehr
+        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R)
+        try:
+            xgrad = np.gradient(self.R)
+        except ValueError:
+            xgrad = 0
+        return np.array([q*0, -2*np.pi*self.mu*np.sqrt(a/np.pi)*q/(self.rho*delta*a) +\
+                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
+                np.sqrt(self.A0)*df) - a*df) * xgrad])
         
     
-    def solve(self, lw, U_in, U_out, t, dt, save, i):
+    def solve(self, lw, U_in, U_out, t, dt, save, i, **kwargs):
         # solve for current timestep
-        U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt)
+        U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt, **kwargs)
         np.copyto(self.U0, U1)
         if save:
             np.copyto(self.U[:,i,:], U1)
@@ -111,6 +130,7 @@ executed first')
         u = ['a', 'u', 'p']
         l = ['m^2', 'm/s', 'Pa']
         positions = range(0,self.nx-1,skip)
+        #positions = range(0,10)
         for i in range(2):
             y = self.U[i,:,positions]
             fname = "%s/%s%d_%s_time.png" % (plot_dir, u[i], self.pos, suffix)
@@ -153,6 +173,16 @@ executed first')
     @property
     def L(self):
         return self._L
+        
+        
+    @property
+    def k(self):
+        return self._k
+        
+        
+    @property
+    def Ehr(self):
+        return self._Ehr
         
         
     @property

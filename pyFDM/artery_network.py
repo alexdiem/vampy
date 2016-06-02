@@ -20,7 +20,7 @@ class ArteryNetwork(object):
         self.setup_arteries(R, a, b, lam, sigma, rho, mu, **kwargs)
         self._t = 0.
         self._ntr = kwargs['ntr']
-        self._progress = 0
+        self._progress = 10
         
         
     def setup_arteries(self, R, a, b, lam, sigma, rho, mu, **kwargs):
@@ -105,7 +105,11 @@ class ArteryNetwork(object):
     def solve(self, u0, u_in, p_out, T):
         # solution list holds numpy arrays of solution
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
+        #tr = np.linspace(0, self.tf, self.ntr)
         i = 0
+        
+        #np.savetxt("./data/artery_inlet.csv" , u_in(np.linspace(0, T, self.nt)), delimiter=",")
+        
         while self.t < self.tf:
             save = False            
             
@@ -134,7 +138,7 @@ class ArteryNetwork(object):
                     #todo: bifurcation outlet condition
                     pass
                 
-                artery.solve(lw, U_in, U_out, self.t, self.dt, save, i-1)
+                artery.solve(lw, U_in, U_out, self.t, self.dt, save, i-1, T=self.T)
                 if ArteryNetwork.cfl_condition(artery, self.dt) == False:
                     raise ValueError(
                             "CFL condition not fulfilled at time %e. Reduce \
@@ -143,8 +147,8 @@ time step size." % (self.t))
                 
             self.timestep()
             
-            if self.t % 10 < self.dt:
-                print "Progress %d" % (self._progress)
+            if self.t % (self.tf/10) < self.dt:
+                print "Progress {:}%".format(self._progress)
                 self._progress += 10
             
             
