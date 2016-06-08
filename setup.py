@@ -15,18 +15,18 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='pyFDM',
+    name='VaMpy',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.0.0',
+    version='0.0.0',
 
     description="""A python package to solve partial differential equations using finite difference methods (FDM).""",
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/akdiem/pyFDM',
+    url='https://github.com/akdiem/VaMpy',
 
     # Author details
     author='Alexandra K. Diem',
@@ -41,7 +41,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 2',
 
         # Indicate who your project is intended for
         'Intended Audience :: Education',
