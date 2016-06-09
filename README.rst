@@ -1,6 +1,8 @@
 =======================================
- pyFDM
+ VaMpy
 =======================================
+
+![Logo](VaMpy_logo.svg)
 
 An implementation of finite difference methods (FDM) to solve partial differential equations (PDE).
 
