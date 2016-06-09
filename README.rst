@@ -1,7 +1,3 @@
-=======================================
- VaMpy
-=======================================
-
 .. image:: VaMpy_logo.png
 
 An implementation of finite difference methods (FDM) to solve partial differential equations (PDE).
