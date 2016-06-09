@@ -2,7 +2,7 @@
  VaMpy
 =======================================
 
-![Logo](VaMpy_logo.svg)
+<object type="image/svg+xml" data="VaMpy_logo.svg" width="300" height="200"></object>
 
 An implementation of finite difference methods (FDM) to solve partial differential equations (PDE).
 
