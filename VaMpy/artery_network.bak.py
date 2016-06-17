@@ -94,17 +94,17 @@ class ArteryNetwork(object):
         p_out = p_n = artery.p(a_n)[-1] # initial guess for p_out
         U_np_mp = (artery.U0[:,-1] + artery.U0[:,-2])/2 +\
                     dt/2 * (-(artery.F(artery.U0[:,-1], j=-1) -\
-                    artery.F(artery.U0[:,-2], j=-2))/artery.dx +\
+                    artery.F(artery.U0[:,-2], j=-1))/artery.dx +\
                     (artery.S(artery.U0[:,-1], j=-1) +\
-                    artery.S(artery.U0[:,-2], j=-2))/2)
+                    artery.S(artery.U0[:,-2], j=-1))/2)
         U_np_mm = (artery.U0[:,-2] + artery.U0[:,-3])/2 +\
-                    dt/2 * (-(artery.F(artery.U0[:,-2], j=-2) -\
-                    artery.F(artery.U0[:,-3], j=-3))/artery.dx +\
-                    (artery.S(artery.U0[:,-2], j=-2) +\
-                    artery.S(artery.U0[:,-3], j=-3))/2)
-        U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mp, j=-2) -\
-                artery.F(U_np_mm, j=-2)) + dt/2 * (artery.S(U_np_mp, j=-2) +\
-                artery.S(U_np_mm, j=-2))
+                    dt/2 * (-(artery.F(artery.U0[:,-2], j=-1) -\
+                    artery.F(artery.U0[:,-3], j=-1))/artery.dx +\
+                    (artery.S(artery.U0[:,-2], j=-1) +\
+                    artery.S(artery.U0[:,-3], j=-1))/2)
+        U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mp, j=-1) -\
+                artery.F(U_np_mm, j=-1)) + dt/2 * (artery.S(U_np_mp, j=-1) +\
+                artery.S(U_np_mm, j=-1))
         kmax = 100
         k = 0
         while k < kmax:
@@ -138,10 +138,10 @@ class ArteryNetwork(object):
     def solve(self, u0, q_in, p_out, T):
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
         #tr = np.linspace(0, self.tf, self.ntr)
+        i = 1
         # variables at 0,0 are set in initial conditions so we do one timestep
         # straight away
         self.timestep()
-        i = 1
         
         while self.t < self.tf:
             save = False  
@@ -152,8 +152,6 @@ class ArteryNetwork(object):
                 
             for artery in self.arteries:
                 lw = LaxWendroff(artery.nx, artery.dx)
-                
-                print "U0", artery.U0[0,0]
                 
                 if artery.pos == 0:
                     # inlet boundary condition
@@ -173,7 +171,7 @@ class ArteryNetwork(object):
                     pass
                 
                 artery.solve(lw, U_in, U_out, self.t, self.dt, save, i-1, T=self.T)
-                
+
                 if ArteryNetwork.cfl_condition(artery, self.dt) == False:
                     raise ValueError(
                             "CFL condition not fulfilled at time %e. Reduce \
