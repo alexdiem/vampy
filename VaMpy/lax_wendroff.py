@@ -25,12 +25,12 @@ class LaxWendroff(object):
         # U0: previous timestep, U1 current timestep
         U1 = np.zeros((2,self.nx))
         
-        # apply boundary conditions
+        # apply inlet boundary condition
         U1[:,0] = U_in
         U1[:,-1] = U_out
         F0 = F(U0, **kwargs)
         S0 = S(U0, **kwargs)
-         
+        
         # calculate half step
         U_np_mp = (U0[:,2:]+U0[:,1:-1])/2 + dt/2 * (-(F(U0[:,2:], **kwargs)-\
                     F(U0[:,1:-1], **kwargs))/self.dx + (S(U0[:,2:], **kwargs)+\

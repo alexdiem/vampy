@@ -16,10 +16,10 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, R, lam, sigma, rho, mu, **kwargs):
+    def __init__(self, pos, R, lam, rho, mu, **kwargs):
         self._pos = pos
         self._R = R
-        self._A0 = np.pi*R**2
+        self._A0 = np.pi*np.power(R, 2)
         self._L = R[0]*lam
         self._k = kwargs['k']
         self._Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
@@ -29,13 +29,14 @@ class Artery(object):
         
     def initial_conditions(self, u0, ntr):
         if not hasattr(self, '_x'):
-            raise AttributeError('Artery not meshed. mesh(self, nx) has to be \
-executed first')
+            raise AttributeError('Artery not meshed. Execute mesh(self, nx) \
+before setting initial conditions.')
         self.U = np.zeros((2, ntr, len(self.x)))
         self.P = np.zeros((ntr, len(self.x)))
         self.U0 = np.zeros((2,len(self.x)))
         self.U0[0,:] = self.A0
-        self.U0[1,:] = u0
+        self.U0[1,:].fill(u0)
+        np.copyto(self.U[:,0,:], self.U0)
         
         
     def mesh(self, nx):
@@ -44,10 +45,6 @@ executed first')
         self._dx = self.x[1] - self.x[0]
         
         
-    def get_uprev(self):
-        pass
-    
-    
     def p(self, a):
         return 4/3 * self.Ehr * (1 - np.sqrt(self.A0 / a))
         
@@ -58,13 +55,16 @@ executed first')
         
     def F(self, U, **kwargs):
         a, q = U
-        f = 4/3 * self.Ehr
         out = np.zeros(U.shape)
         out[0] = q
         if U.shape == (2,):
-            out[1] = np.power(q,2)/a + f[kwargs['j']]/self.rho * np.sqrt(self.A0[kwargs['j']]*a)
+            f = 4/3 * self.Ehr[kwargs['j']]
+            out[1] = np.power(q,2)/a + f/self.rho * np.sqrt(
+                    self.A0[kwargs['j']] * a)
         elif U.shape == (2, self.nx-2):
-            out[1] = np.power(q,2)/a + f[1:-1]/self.rho * np.sqrt(self.A0[1:-1]*a)
+            f = 4/3 * self.Ehr[1:-1]
+            out[1] = np.power(q,2)/a + f/self.rho * np.sqrt(
+                    self.A0[1:-1] * a)
         return out
         
         
@@ -72,18 +72,22 @@ executed first')
         a, q = U
         #delta = round(np.sqrt(self.mu*kwargs['T']/(self.rho*2*np.pi)), 6)
         delta = 0.000855
-        f = 4/3 * self.Ehr
-        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R)
         xgrad = np.gradient(self.R)
         out = np.zeros(U.shape)
         if U.shape == (2,):
+            f = 4/3 * self.Ehr[kwargs['j']]
+            df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] *\
+                    self.R[kwargs['j']])
             out[1] = -2*np.pi*self.mu*np.sqrt(a/np.pi)*q/(self.rho*delta*a) +\
-                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f[kwargs['j']] +\
-                np.sqrt(self.A0[kwargs['j']])*df[kwargs['j']]) - a*df[kwargs['j']]) * xgrad[kwargs['j']]
+                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
+                np.sqrt(self.A0[kwargs['j']])*df) - a*df) * xgrad[kwargs['j']]
         elif U.shape == (2, self.nx-2):
+            f = 4/3 * self.Ehr[1:-1]
+            df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] *\
+                    self.R[1:-1])
             out[1] = -2*np.pi*self.mu*np.sqrt(a/np.pi)*q/(self.rho*delta*a) +\
-                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f[1:-1] +\
-                np.sqrt(self.A0[1:-1])*df[1:-1]) - a*df[1:-1]) * xgrad[1:-1]
+                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
+                np.sqrt(self.A0[1:-1])*df) - a*df) * xgrad[1:-1]
         return out
         
 
@@ -93,7 +97,6 @@ executed first')
         np.copyto(self.U0, U1)
         if save:
             np.copyto(self.U[:,i,:], U1)
-        return U1
         
         
     def dump_results(self, suffix, data_dir):
@@ -102,7 +105,7 @@ executed first')
         np.savetxt("%s/a%d_%s.csv" % (data_dir, self.pos, suffix),
                    self.U[0,:,:], delimiter=',')  
         np.savetxt("%s/p%d_%s.csv" % (data_dir, self.pos, suffix),
-                   self.p(self.U[0,:,:]), delimiter=',') 
+                   self.P, delimiter=',') 
                    
                    
     def spatial_plots(self, suffix, plot_dir, n):
@@ -113,12 +116,12 @@ executed first')
         positions = range(0,nt-1,skip)
         for i in range(2):
             y = self.U[i,positions,:]
-            fname = "%s/%s%d_%s_spatial.png" % (plot_dir, u[i], self.pos, suffix)
+            fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[i], self.pos)
             Artery.plot(suffix, plot_dir, self.x, y, positions, "m", l[i],
                         fname)
                      
         y = self.P[positions,:]    
-        fname = "%s/%s%d_%s_spatial.png" % (plot_dir, u[2], self.pos, suffix)
+        fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[2], self.pos)
         Artery.plot(suffix, plot_dir, self.x, y, positions, "m", l[2],
                         fname)
             
@@ -129,15 +132,14 @@ executed first')
         u = ['a', 'q', 'p']
         l = ['m^2', 'm/s', 'Pa']
         positions = range(0,self.nx-1,skip)
-        #positions = range(0,1)
         for i in range(2):
             y = self.U[i,:,positions]
-            fname = "%s/%s%d_%s_time.png" % (plot_dir, u[i], self.pos, suffix)
+            fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[i], self.pos)
             Artery.plot(suffix, plot_dir, time, y, positions, "t", l[i],
                         fname)
                         
         y = np.transpose(self.P[:,positions]) 
-        fname = "%s/%s%d_%s_time.png" % (plot_dir, u[2], self.pos, suffix)
+        fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[2], self.pos)
         Artery.plot(suffix, plot_dir, time, y, positions, "t", l[2],
                         fname)
             
@@ -155,17 +157,31 @@ executed first')
         plt.savefig(fname, dpi=600, bbox_inches='tight')
         
         
-    def s3d_plot(self, suffix, plot_dir, time):
+    def p3d_plot(self, suffix, plot_dir, time):
         fig = plt.figure(figsize=(10,6))
         ax = fig.gca(projection='3d')
         x = np.linspace(0, self.L, len(time))
-        X, Y = np.meshgrid(time, x)
+        Y, X = np.meshgrid(time, x)
         dz = int(self.nx/len(time))
         Z = self.P[:,0:self.nx+1:dz]
         surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
                        linewidth=0, antialiased=False)
         fig.colorbar(surf, shrink=0.5, aspect=5)
-        fname = "%s/p3d%d_%s_spatial.png" % (plot_dir, self.pos, suffix)
+        fname = "%s/%s_p3d%d.png" % (plot_dir, suffix, self.pos)
+        fig.savefig(fname, dpi=600, bbox_inches='tight')
+        
+        
+    def q3d_plot(self, suffix, plot_dir, time):
+        fig = plt.figure(figsize=(10,6))
+        ax = fig.gca(projection='3d')
+        x = np.linspace(0, self.L, len(time))
+        Y, X = np.meshgrid(time, x)
+        dz = int(self.nx/len(time))
+        Z = self.U[1,:,0:self.nx+1:dz]
+        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
+                       linewidth=0, antialiased=False)
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+        fname = "%s/%s_q3d%d.png" % (plot_dir, suffix, self.pos)
         fig.savefig(fname, dpi=600, bbox_inches='tight')
         
     

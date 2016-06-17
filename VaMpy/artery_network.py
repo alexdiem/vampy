@@ -16,18 +16,18 @@ class ArteryNetwork(object):
     """
     
     
-    def __init__(self, R, a, b, lam, sigma, rho, mu, depth, **kwargs):
+    def __init__(self, R, a, b, lam, rho, mu, depth, **kwargs):
         self._depth = depth
         self._arteries = []
-        self.setup_arteries(R, a, b, lam, sigma, rho, mu, **kwargs)
+        self.setup_arteries(R, a, b, lam, rho, mu, **kwargs)
         self._t = 0.0
         self._ntr = kwargs['ntr']
         self._progress = 10
         
         
-    def setup_arteries(self, R, a, b, lam, sigma, rho, mu, **kwargs):
+    def setup_arteries(self, R, a, b, lam, rho, mu, **kwargs):
         pos = 0
-        self.arteries.append(Artery(pos, R, lam, sigma, rho, mu, **kwargs)) 
+        self.arteries.append(Artery(pos, R, lam, rho, mu, **kwargs)) 
         pos += 1
         radii = [R]
         for i in range(1,self.depth):
@@ -35,9 +35,9 @@ class ArteryNetwork(object):
             for radius in radii:    
                 ra = radius * a
                 rb = radius * b
-                self.arteries.append(Artery(pos, ra, lam, sigma, rho, mu, **kwargs))
+                self.arteries.append(Artery(pos, ra, lam, rho, mu, **kwargs))
                 pos += 1
-                self.arteries.append(Artery(pos, rb, lam, sigma, rho, mu, **kwargs))
+                self.arteries.append(Artery(pos, rb, lam, rho, mu, **kwargs))
                 pos += 1
                 new_radii.append(ra)
                 new_radii.append(rb)
@@ -72,9 +72,9 @@ class ArteryNetwork(object):
         q_0_np = q_in(in_t-dt)
         U_0_n = artery.U0[:,0]
         U_1_n = artery.U0[:,1]
-        U_12_np = (U_1_n[1] + U_0_n[1])/2 + dt/2 * (- (artery.F(U_1_n, j=0) -\
-                    artery.F(U_0_n, j=0))/artery.dx + (artery.S(U_1_n, j=0) +\
-                    artery.S(U_1_n, j=0))/2)
+        U_12_np = (U_1_n[1] + U_0_n[1])/2 + dt/2 * (- (artery.F(U_1_n, j=1) -\
+                    artery.F(U_0_n, j=1))/artery.dx + (artery.S(U_1_n, j=1) +\
+                    artery.S(U_1_n, j=1))/2)
         return np.array([U_0_n[0] - 2*dt/artery.dx * (U_12_np[1] - q_0_np),
                          q_in(in_t)])
      
@@ -87,33 +87,31 @@ class ArteryNetwork(object):
         a_n = artery.U0[0,-1]
         q_n = artery.U0[1,-1]
         p_out = p_n = artery.p(a_n)[-1] # initial guess for p_out
+        
         U_np_mp = (artery.U0[:,-1] + artery.U0[:,-2])/2 +\
                     dt/2 * (-(artery.F(artery.U0[:,-1], j=-1) -\
-                    artery.F(artery.U0[:,-2], j=-1))/artery.dx +\
+                    artery.F(artery.U0[:,-2], j=-2))/artery.dx +\
                     (artery.S(artery.U0[:,-1], j=-1) +\
-                    artery.S(artery.U0[:,-2], j=-1))/2)
+                    artery.S(artery.U0[:,-2], j=-2))/2)
         U_np_mm = (artery.U0[:,-2] + artery.U0[:,-3])/2 +\
-                    dt/2 * (-(artery.F(artery.U0[:,-2], j=-1) -\
-                    artery.F(artery.U0[:,-3], j=-1))/artery.dx +\
-                    (artery.S(artery.U0[:,-2], j=-1) +\
-                    artery.S(artery.U0[:,-3], j=-1))/2)
-        U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mp, j=-1) -\
-                artery.F(U_np_mm, j=-1)) + dt/2 * (artery.S(U_np_mp, j=-1) +\
-                artery.S(U_np_mm, j=-1))
+                    dt/2 * (-(artery.F(artery.U0[:,-2], j=-2) -\
+                    artery.F(artery.U0[:,-3], j=-3))/artery.dx +\
+                    (artery.S(artery.U0[:,-2], j=-2) +\
+                    artery.S(artery.U0[:,-3], j=-3))/2)
+        U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mp, j=-2) -\
+                artery.F(U_np_mm, j=-2)) + dt/2 * (artery.S(U_np_mp, j=-2) +\
+                artery.S(U_np_mm, j=-2))
+        
         kmax = 100
         k = 0
         while k < kmax:
             p_old = p_out
-            q_out = (p_out - p_n)/R1 + dt*p_n/(R1*R2*Ct) -\
-                    dt*(R1+R2)*q_n/(R1*R2*Ct) + q_n
+            q_out = (p_out - p_n)/R1 + dt/(R1*R2*Ct) * (p_n - q_n*(R1+R2)) + q_n
             a_out = a_n - dt * (q_out - U_mm[1])/artery.dx
+            p_out = artery.p(a_out)[-1]
             if abs(p_old - p_out) < 1e-7:
                 break
-            p_out = artery.p(a_out)[-1]
             k += 1
-        #print q_n, q_out
-        #if np.isnan(q_out):
-        #    sys.exit()
         return np.array([a_out, q_out])
         
     
@@ -124,7 +122,7 @@ class ArteryNetwork(object):
     
     @staticmethod
     def cfl_condition(artery, dt):
-        a = artery.U0[0,1]
+        a = artery.U0[0]
         c = artery.wave_speed(a)
         u = a / artery.U0[1,1]
         v = (u + c, u - c)
@@ -134,24 +132,22 @@ class ArteryNetwork(object):
             
     
     def solve(self, u0, q_in, p_out, T):
-        # solution list holds numpy arrays of solution
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
         #tr = np.linspace(0, self.tf, self.ntr)
-        i = 0
         # variables at 0,0 are set in initial conditions so we do one timestep
         # straight away
         self.timestep()
+        i = 1
         
         while self.t < self.tf:
-            save = False            
-            
+            save = False  
+
             if (self.t == self.tf) or (i < self.ntr and abs(self.t - tr[i]) < self.dtr):
                 save = True
                 i += 1
                 
             for artery in self.arteries:
-                nx = len(artery.x)
-                lw = LaxWendroff(nx, artery.dx)
+                lw = LaxWendroff(artery.nx, artery.dx)
                 
                 if artery.pos == 0:
                     # inlet boundary condition
@@ -169,29 +165,23 @@ class ArteryNetwork(object):
                 else:
                     #todo: bifurcation outlet condition
                     pass
-                                
+                
                 artery.solve(lw, U_in, U_out, self.t, self.dt, save, i-1, T=self.T)
+                
                 if ArteryNetwork.cfl_condition(artery, self.dt) == False:
                     raise ValueError(
                             "CFL condition not fulfilled at time %e. Reduce \
 time step size." % (self.t))
                     sys.exit(1)  
-                    
-                #if np.isnan(artery.U0).any():
-                #    print artery.U0[:,0], artery.U0[:,-1]
-                #    print U_in, U_out
-                #    sys.exit()
-                
+            
             self.timestep()
             
             if self.t % (self.tf/10) < self.dt:
                 print "Progress {:}%".format(self._progress)
                 self._progress += 10
                 
-        for artery in self.arteries:
-            for i in range(self.ntr):
-                artery.P[i,:] = artery.p(artery.U[0,i,:])
-            
+        artery.P = artery.p(artery.U[0,:,:])/133 # convert to mmHg
+                
             
     def dump_results(self, suffix, data_dir):
         for artery in self.arteries:
@@ -212,7 +202,8 @@ time step size." % (self.t))
     def s3d_plots(self, suffix, plot_dir):
         time = np.linspace(self.tf-self.T, self.tf, self.ntr)
         for artery in self.arteries:
-            artery.s3d_plot(suffix, plot_dir, time)
+            artery.p3d_plot(suffix, plot_dir, time)
+            artery.q3d_plot(suffix, plot_dir, time)
 
             
     @property
