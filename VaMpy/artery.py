@@ -37,7 +37,6 @@ before setting initial conditions.')
         self.U0[0,:] = self.A0
         self.U0[1,:].fill(u0)
         np.copyto(self.U[:,0,:], self.U0)
-        print "init", self.U0[0,0]
         
         
     def mesh(self, nx):
@@ -57,18 +56,16 @@ before setting initial conditions.')
     def F(self, U, **kwargs):
         a, q = U
         out = np.zeros(U.shape)
+        f = 4/3 * self.Ehr
         out[0] = q
         if 'j' in kwargs:
             j = kwargs['j']
-            f = 4/3 * self.Ehr[j]
-            out[1] = np.power(q,2)/a + f/self.rho * np.sqrt(self.A0[j] * a)
+            out[1] = np.power(q,2)/a + f[j]/self.rho * np.sqrt(self.A0[j] * a)
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
-            f = 4/3 * self.Ehr[j:k]
-            out[1] = np.power(q,2)/a + f/self.rho * np.sqrt(self.A0[j:k] * a)
+            out[1] = np.power(q,2)/a + f[j:k]/self.rho * np.sqrt(self.A0[j:k] * a)
         else:
-            f = 4/3 * self.Ehr
             out[1] = np.power(q,2)/a + f/self.rho * np.sqrt(self.A0 * a)
         return out
         
@@ -79,24 +76,20 @@ before setting initial conditions.')
         delta = 0.000855
         xgrad = np.gradient(self.R)
         out = np.zeros(U.shape)
+        f = 4/3 * self.Ehr
+        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R)
         if 'j' in kwargs:
             j = kwargs['j']
-            f = 4/3 * self.Ehr[j]
-            df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R[j])
             out[1] = -2*np.pi*self.mu*np.sqrt(a/np.pi)*q/(self.rho*delta*a) +\
-                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(self.A0[j])*df) - a*df) * xgrad[j]
+                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f[j] +\
+                np.sqrt(self.A0[j])*df[j]) - a*df[j]) * xgrad[j]
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
-            f = 4/3 * self.Ehr[j:k]
-            df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R[j:k])
             out[1] = -2*np.pi*self.mu*np.sqrt(a/np.pi)*q/(self.rho*delta*a) +\
-                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(self.A0[j:k])*df) - a*df) * xgrad[j:k]
+                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f[j:k] +\
+                np.sqrt(self.A0[j:k])*df[j:k]) - a*df[j:k]) * xgrad[j:k]
         else:
-            f = 4/3 * self.Ehr
-            df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R)
             out[1] = -2*np.pi*self.mu*np.sqrt(a/np.pi)*q/(self.rho*delta*a) +\
                 1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
                 np.sqrt(self.A0)*df) - a*df) * xgrad

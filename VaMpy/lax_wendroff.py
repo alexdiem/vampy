@@ -27,6 +27,7 @@ class LaxWendroff(object):
         # apply boundary conditions
         U1[:,0] = U_in
         U1[:,-1] = U_out
+        
         # calculate half step
         U_np_mp = (U0[:,2:]+U0[:,1:-1])/2 + dt/2 * (-(F(U0[:,2:], j=2, k=self.nx)-\
                     F(U0[:,1:-1], j=1, k=-1))/self.dx + (S(U0[:,2:], j=2, k=self.nx)+\

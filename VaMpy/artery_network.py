@@ -69,7 +69,7 @@ class ArteryNetwork(object):
     
     @staticmethod        
     def inlet_bc(artery, q_in, in_t, dt, **kwargs):
-        q_0_np = q_in(in_t-dt) # q_0_n+1/2
+        q_0_np = q_in(in_t-dt/2) # q_0_n+1/2
         q_0_n1 = q_in(in_t) # q_0_n+1
 
         U_0_n = artery.U0[:,0] # U_0_n
@@ -79,7 +79,7 @@ class ArteryNetwork(object):
                     (artery.S(U_1_n, j=1) + artery.S(U_0_n, j=0))/2) # U_1/2_n+1/2
         q_12_np = U_12_np[1] # q_1/2_n+1/2
         
-        a_0_n1 = artery.U0[0,0] - dt/artery.dx * 2 * (q_12_np - q_0_np)
+        a_0_n1 = artery.U0[0,0] - dt/artery.dx * (2*q_12_np/2 - 2*q_0_np)
         
         return np.array([a_0_n1, q_0_n1])
      
@@ -152,8 +152,6 @@ class ArteryNetwork(object):
                 
             for artery in self.arteries:
                 lw = LaxWendroff(artery.nx, artery.dx)
-                
-                print "U0", artery.U0[0,0]
                 
                 if artery.pos == 0:
                     # inlet boundary condition
