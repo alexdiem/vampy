@@ -16,15 +16,15 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, R, lam, rho, mu, **kwargs):
+    def __init__(self, pos, R, lam, rho, nu, **kwargs):
         self._pos = pos
         self._R = R
         self._A0 = np.pi*np.power(R, 2)
         self._L = R[0]*lam
         self._k = kwargs['k']
-        self._Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
+        self._Ehr = self.k[0] * np.exp(self.k[1]*R[0]) + self.k[2]
         self._rho = rho
-        self._mu = mu
+        self._nu = nu
         
         
     def initial_conditions(self, u0, ntr):
@@ -36,7 +36,6 @@ before setting initial conditions.')
         self.U0 = np.zeros((2,len(self.x)))
         self.U0[0,:] = self.A0
         self.U0[1,:].fill(u0)
-        np.copyto(self.U[:,0,:], self.U0)
         
         
     def mesh(self, nx):
@@ -60,39 +59,43 @@ before setting initial conditions.')
         out[0] = q
         if 'j' in kwargs:
             j = kwargs['j']
-            out[1] = np.power(q,2)/a + f[j]/self.rho * np.sqrt(self.A0[j] * a)
+            a0 = self.A0[j]
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
-            out[1] = np.power(q,2)/a + f[j:k]/self.rho * np.sqrt(self.A0[j:k] * a)
+            a0 = self.A0[j:k]
         else:
-            out[1] = np.power(q,2)/a + f/self.rho * np.sqrt(self.A0 * a)
+            a0 = self.A0
+        out[1] = np.power(q,2)/a + f * np.sqrt(a0*a)
         return out
         
         
     def S(self, U, **kwargs):
         a, q = U
-        #delta = round(np.sqrt(self.mu*kwargs['T']/(self.rho*2*np.pi)), 6)
-        delta = 0.000855
-        xgrad = np.gradient(self.R)
+        rc = 0.01
+        qc = 1e-5 
+        T = 1.0 * qc / rc**3
+        delta = np.sqrt(self.nu*T/(2*np.pi))
+        xgrad = self.R*np.log(self.R[-1]/self.R[0])/self.L
         out = np.zeros(U.shape)
         f = 4/3 * self.Ehr
-        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R)
+        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R[0])
+        Re = qc / (rc*self.nu)
+        R = np.sqrt(a/np.pi)
         if 'j' in kwargs:
             j = kwargs['j']
-            out[1] = -2*np.pi*self.mu*np.sqrt(a/np.pi)*q/(self.rho*delta*a) +\
-                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f[j] +\
-                np.sqrt(self.A0[j])*df[j]) - a*df[j]) * xgrad[j]
+            a0 = self.A0[j]
+            xgrad = xgrad[j]
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
-            out[1] = -2*np.pi*self.mu*np.sqrt(a/np.pi)*q/(self.rho*delta*a) +\
-                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f[j:k] +\
-                np.sqrt(self.A0[j:k])*df[j:k]) - a*df[j:k]) * xgrad[j:k]
+            a0 = self.A0[j:k]
+            xgrad = xgrad[j:k]
         else:
-            out[1] = -2*np.pi*self.mu*np.sqrt(a/np.pi)*q/(self.rho*delta*a) +\
-                1/self.rho * (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(self.A0)*df) - a*df) * xgrad
+            a0 = self.A0
+        out[1] = -2*np.pi*R*q/(Re*delta*a) +\
+                (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
+                np.sqrt(a0)*df) - a*df) * xgrad
         return out
         
 
@@ -101,6 +104,7 @@ before setting initial conditions.')
         U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt, **kwargs)
         np.copyto(self.U0, U1)
         if save:
+            self.P[i,:] = self.p(U1[0,:])
             np.copyto(self.U[:,i,:], U1)
         
         
@@ -114,38 +118,45 @@ before setting initial conditions.')
                    
                    
     def spatial_plots(self, suffix, plot_dir, n):
+        # redimensionalise
+        rc = 0.01
+        qc = 1e-5 
         nt = len(self.U[0,:,0])        
         skip = int(nt/n)
         u = ['a', 'q', 'p']
-        l = ['m^2', 'm^3/s', 'Pa']
+        l = ['m^2', 'm^3/s', 'mmHg']
         positions = range(0,nt-1,skip)
+        #positions = range(5)
         for i in range(2):
             y = self.U[i,positions,:]
             fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[i], self.pos)
-            Artery.plot(suffix, plot_dir, self.x, y, positions, "m", l[i],
+            Artery.plot(suffix, plot_dir, self.x*rc, y, positions, "m", l[i],
                         fname)
                      
-        y = self.P[positions,:]    
+        y = self.P[positions,:]/133 # convert to mmHg    
         fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[2], self.pos)
-        Artery.plot(suffix, plot_dir, self.x, y, positions, "m", l[2],
+        Artery.plot(suffix, plot_dir, self.x*rc, y, positions, "m", l[2],
                         fname)
             
             
     def time_plots(self, suffix, plot_dir, n, time):
+        # redimensionalise
+        rc = 0.01
+        qc = 1e-5 
         nt = len(time)
         skip = int(self.nx/n)
         u = ['a', 'q', 'p']
-        l = ['m^2', 'm/s', 'Pa']
+        l = ['m^2', 'm^3/s', 'mmHg']
         positions = range(0,self.nx-1,skip)
         for i in range(2):
             y = self.U[i,:,positions]
             fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[i], self.pos)
-            Artery.plot(suffix, plot_dir, time, y, positions, "t", l[i],
+            Artery.plot(suffix, plot_dir, time*rc**3/qc, y, positions, "t", l[i],
                         fname)
                         
-        y = np.transpose(self.P[:,positions]) 
+        y = np.transpose(self.P[:,positions])/133 # convert to mmHg    
         fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[2], self.pos)
-        Artery.plot(suffix, plot_dir, time, y, positions, "t", l[2],
+        Artery.plot(suffix, plot_dir, time*rc**3/qc, y, positions, "t", l[2],
                         fname)
             
             
@@ -226,8 +237,8 @@ before setting initial conditions.')
         
         
     @property
-    def mu(self):
-        return self._mu
+    def nu(self):
+        return self._nu
         
         
     @property
