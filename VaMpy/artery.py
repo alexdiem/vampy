@@ -16,7 +16,7 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, R, lam, rho, nu, **kwargs):
+    def __init__(self, pos, R, lam, rho, nu, delta, **kwargs):
         self._pos = pos
         self._R = R
         self._A0 = np.pi*np.power(R, 2)
@@ -25,6 +25,11 @@ class Artery(object):
         self._Ehr = self.k[0] * np.exp(self.k[1]*R[0]) + self.k[2]
         self._rho = rho
         self._nu = nu
+        nondim = kwargs['nondim']
+        self._rc = nondim[0]
+        self._qc = nondim[1]
+        self._Re = nondim[2]
+        self._delta = delta
         
         
     def initial_conditions(self, u0, ntr):
@@ -49,7 +54,7 @@ before setting initial conditions.')
         
         
     def wave_speed(self, a):
-        return np.sqrt(-self.rho * 2/3 * self.Ehr * np.sqrt(self.A0/a))
+        return np.sqrt(-2/3 * self.Ehr * np.sqrt(self.A0/a))
         
         
     def F(self, U, **kwargs):
@@ -60,10 +65,12 @@ before setting initial conditions.')
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
+            f = 4/3 * self.Ehr
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
             a0 = self.A0[j:k]
+            f = 4/3 * self.Ehr
         else:
             a0 = self.A0
         out[1] = np.power(q,2)/a + f * np.sqrt(a0*a)
@@ -72,15 +79,11 @@ before setting initial conditions.')
         
     def S(self, U, **kwargs):
         a, q = U
-        rc = 0.01
-        qc = 1e-5 
-        T = 1.0 * qc / rc**3
-        delta = np.sqrt(self.nu*T/(2*np.pi))
-        xgrad = self.R*np.log(self.R[-1]/self.R[0])/self.L
+        #xgrad = self.R*np.log(self.R[-1]/self.R[0])/self.L
+        xgrad = np.gradient(self.R)
         out = np.zeros(U.shape)
         f = 4/3 * self.Ehr
         df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R[0])
-        Re = qc / (rc*self.nu)
         R = np.sqrt(a/np.pi)
         if 'j' in kwargs:
             j = kwargs['j']
@@ -93,7 +96,7 @@ before setting initial conditions.')
             xgrad = xgrad[j:k]
         else:
             a0 = self.A0
-        out[1] = -2*np.pi*R*q/(Re*delta*a) +\
+        out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
                 np.sqrt(a0)*df) - a*df) * xgrad
         return out
@@ -119,8 +122,6 @@ before setting initial conditions.')
                    
     def spatial_plots(self, suffix, plot_dir, n):
         # redimensionalise
-        rc = 0.01
-        qc = 1e-5 
         nt = len(self.U[0,:,0])        
         skip = int(nt/n)
         u = ['a', 'q', 'p']
@@ -130,33 +131,31 @@ before setting initial conditions.')
         for i in range(2):
             y = self.U[i,positions,:]
             fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[i], self.pos)
-            Artery.plot(suffix, plot_dir, self.x*rc, y, positions, "m", l[i],
+            Artery.plot(suffix, plot_dir, self.x, y, positions, "m", l[i],
                         fname)
                      
-        y = self.P[positions,:]/133 # convert to mmHg    
+        y = self.P[positions,:] # convert to mmHg    
         fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[2], self.pos)
-        Artery.plot(suffix, plot_dir, self.x*rc, y, positions, "m", l[2],
+        Artery.plot(suffix, plot_dir, self.x, y, positions, "m", l[2],
                         fname)
             
             
     def time_plots(self, suffix, plot_dir, n, time):
-        # redimensionalise
-        rc = 0.01
-        qc = 1e-5 
         nt = len(time)
         skip = int(self.nx/n)
         u = ['a', 'q', 'p']
         l = ['m^2', 'm^3/s', 'mmHg']
         positions = range(0,self.nx-1,skip)
+        #positions = range(0,5)        
         for i in range(2):
             y = self.U[i,:,positions]
             fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[i], self.pos)
-            Artery.plot(suffix, plot_dir, time*rc**3/qc, y, positions, "t", l[i],
+            Artery.plot(suffix, plot_dir, time, y, positions, "t", l[i],
                         fname)
                         
-        y = np.transpose(self.P[:,positions])/133 # convert to mmHg    
+        y = np.transpose(self.P[:,positions]) # convert to mmHg    
         fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[2], self.pos)
-        Artery.plot(suffix, plot_dir, time*rc**3/qc, y, positions, "t", l[2],
+        Artery.plot(suffix, plot_dir, time, y, positions, "t", l[2],
                         fname)
             
             
@@ -289,3 +288,19 @@ before setting initial conditions.')
     @P.setter
     def P(self, value): 
         self._P = value
+        
+    @property
+    def rc(self):
+        return self._rc
+        
+    @property
+    def qc(self):
+        return self._qc
+        
+    @property
+    def Re(self):
+        return self._Re
+        
+    @property
+    def delta(self):
+        return self._delta
