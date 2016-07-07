@@ -76,16 +76,16 @@ class ArteryNetwork(object):
     def inlet_bc(artery, q_in, in_t, dt, **kwargs):
         q_0_np = q_in(in_t-dt/2) # q_0_n+1/2
         q_0_n1 = q_in(in_t) # q_0_n+1
-        
         U_0_n = artery.U0[:,0] # U_0_n
         U_1_n = artery.U0[:,1] # U_1_n
-        U_12_np = (U_1_n + U_0_n)/2 + dt/2 * (-\
-                    (artery.F(U_1_n, j=0) - artery.F(U_0_n, j=0))/artery.dx +\
-                    (artery.S(U_1_n, j=0) + artery.S(U_0_n, j=0))/2) # U_1/2_n+1/2
+        U_12_np = (U_1_n + U_0_n)/2 - dt*(artery.F(U_1_n, j=0) -\
+                artery.F(U_0_n, j=0))/(2*artery.dx) + dt*(artery.S(U_1_n, j=0) +\
+                artery.S(U_0_n, j=0))/4 # U_1/2_n+1/2
         q_12_np = U_12_np[1] # q_1/2_n+1/2
-        
-        a_0_n1 = U_0_n[0] - dt/artery.dx * 2*(q_12_np - q_0_np)
-        
+        a_0_n1 = U_0_n[0] - 2*dt*(q_12_np - q_0_np)/artery.dx
+        #print np.array([a_0_n1, q_0_n1])
+        #print artery.A0[0]
+        #sys.exit()
         return np.array([a_0_n1, q_0_n1])
      
     
@@ -96,7 +96,7 @@ class ArteryNetwork(object):
         Ct = 8.7137e-6*rho*qc**2/rc**7
         a_n = artery.U0[0,-1]
         q_n = artery.U0[1,-1]
-        p_out = p_n = artery.p(a_n)[-1] # initial guess for p_out
+        p_out = p_o = artery.p(a_n)[-1] # initial guess for p_out
         U_np_mp = (artery.U0[:,-1] + artery.U0[:,-2])/2 +\
                 dt/2 * (-(artery.F(artery.U0[:,-1], j=-1) -\
                 artery.F(artery.U0[:,-2], j=-2))/artery.dx +\
@@ -110,15 +110,14 @@ class ArteryNetwork(object):
         U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mm, j=-1) -\
                 artery.F(U_np_mp, j=-1)) + dt/2 * (artery.S(U_np_mm, j=-1) +\
                 artery.S(U_np_mp, j=-1))
-        kmax = 1000
         k = 0
-        while k < kmax:
-            p_old = p_out
-            q_out = q_n + (p_out-p_n)/R1 + dt*(p_n/(R2*Ct) -\
+        while k < 1000:
+            p_old = p_o
+            q_out = q_n + (p_o-p_out)/R1 + dt*(p_out/(R2*Ct) -\
                     q_n*(R1+R2)/(R2*Ct))/R1
             a_out = a_n - dt * (q_out - U_mm[1])/artery.dx
-            p_out = artery.p(a_out)[-1]
-            if abs(p_old - p_out) < 1e-7:
+            p_o = artery.p(a_out)[-1]
+            if abs(p_old - p_o) < 1e-7:
                 break
             k += 1
         return np.array([a_out, q_out])
@@ -150,7 +149,7 @@ class ArteryNetwork(object):
         while self.t < self.tf:
             save = False  
             
-            if abs(tr[i]-self.t) < 1e-4 or self.t >= self.tf-self.dt:
+            if i < self.ntr and (abs(tr[i]-self.t) < 1e-4 or self.t >= self.tf-self.dt):
                 save = True
                 i += 1
                 
@@ -190,7 +189,7 @@ time step size." % (self.t))
                 self._progress += 10
         
         # redimensionalise
-        artery.P = artery.P * self.rho * self.qc**2 / self.rc**4
+        artery.P = 80 + artery.P*self.rho*self.qc**2*760 / (1.01325*10**6*self.rc**4)
         artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
         artery.U[1,:,:] = artery.U[1,:,:] * self.qc
                 

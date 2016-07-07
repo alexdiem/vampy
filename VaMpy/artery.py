@@ -50,9 +50,9 @@ before setting initial conditions.')
         
         
     def p(self, a):
-        return 4/3 * self.Ehr * (1 - np.sqrt(self.A0 / a))
+        return 4/3 * self.Ehr * (1 - np.sqrt(self.A0/a))
         
-        
+
     def wave_speed(self, a):
         return np.sqrt(-2/3 * self.Ehr * np.sqrt(self.A0/a))
         
@@ -65,38 +65,37 @@ before setting initial conditions.')
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
-            f = 4/3 * self.Ehr
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
             a0 = self.A0[j:k]
-            f = 4/3 * self.Ehr
         else:
             a0 = self.A0
-        out[1] = np.power(q,2)/a + f * np.sqrt(a0*a)
+        out[1] = q*q/a + f * np.sqrt(a0*a)
         return out
         
         
     def S(self, U, **kwargs):
         a, q = U
-        #xgrad = self.R*np.log(self.R[-1]/self.R[0])/self.L
         xgrad = np.gradient(self.R)
         out = np.zeros(U.shape)
         f = 4/3 * self.Ehr
-        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1] * self.R[0])
-        R = np.sqrt(a/np.pi)
+        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*self.R)       
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
             xgrad = xgrad[j]
+            df = df[j]
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
             a0 = self.A0[j:k]
             xgrad = xgrad[j:k]
+            df = df[j:k]
         else:
             a0 = self.A0
-        out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
+        R = np.sqrt(a/np.pi)
+        out[1] = -2*np.pi*R*q / (self.Re*self.delta*a0) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
                 np.sqrt(a0)*df) - a*df) * xgrad
         return out
