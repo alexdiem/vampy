@@ -47,6 +47,7 @@ before setting initial conditions.')
         self._nx = nx
         self._x = np.linspace(0.0, self.L, nx)
         self._dx = self.x[1] - self.x[0]
+        self._xgrad = np.gradient(self.R, 2*self.dx)
         
         
     def p(self, a):
@@ -54,7 +55,7 @@ before setting initial conditions.')
         
 
     def wave_speed(self, a):
-        return np.sqrt(-2/3 * self.Ehr * np.sqrt(self.A0/a))
+        return -np.sqrt(2/3 * self.Ehr * np.sqrt(self.A0/a))
         
         
     def F(self, U, **kwargs):
@@ -72,30 +73,32 @@ before setting initial conditions.')
         else:
             a0 = self.A0
         out[1] = q*q/a + f * np.sqrt(a0*a)
+        if np.isnan(out[1]).any():
+            print a
+            print q
+            print out[1]
+            sys.exit()
         return out
         
         
     def S(self, U, **kwargs):
         a, q = U
-        xgrad = np.gradient(self.R)
         out = np.zeros(U.shape)
         f = 4/3 * self.Ehr
-        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*self.R)       
+        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*self.R[0]) 
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
-            xgrad = xgrad[j]
-            df = df[j]
+            xgrad = self.xgrad[j]
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
             a0 = self.A0[j:k]
-            xgrad = xgrad[j:k]
-            df = df[j:k]
+            xgrad = self.xgrad[j:k]
         else:
             a0 = self.A0
         R = np.sqrt(a/np.pi)
-        out[1] = -2*np.pi*R*q / (self.Re*self.delta*a0) +\
+        out[1] = -2*np.pi*R*q/(self.Re*self.delta*a0) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
                 np.sqrt(a0)*df) - a*df) * xgrad
         return out
@@ -107,7 +110,8 @@ before setting initial conditions.')
         np.copyto(self.U0, U1)
         if save:
             self.P[i,:] = self.p(U1[0,:])
-            np.copyto(self.U[:,i,:], U1)
+            np.copyto(self.U[0,i,:], U1[0])
+            np.copyto(self.U[1,i,:], U1[1])
         
         
     def dump_results(self, suffix, data_dir):
@@ -152,7 +156,7 @@ before setting initial conditions.')
             Artery.plot(suffix, plot_dir, time, y, positions, "t", l[i],
                         fname)
                         
-        y = np.transpose(self.P[:,positions]) # convert to mmHg    
+        y = np.transpose(self.P[:,positions])   
         fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[2], self.pos)
         Artery.plot(suffix, plot_dir, time, y, positions, "t", l[2],
                         fname)
@@ -303,3 +307,7 @@ before setting initial conditions.')
     @property
     def delta(self):
         return self._delta
+        
+    @property
+    def xgrad(self):
+        return self._xgrad

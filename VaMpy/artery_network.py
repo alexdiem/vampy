@@ -59,11 +59,10 @@ class ArteryNetwork(object):
             artery.mesh(nx)
             
     
-    def set_time(self, nt, dt, T=0.0, tc=1):
-        self._nt = nt
+    def set_time(self, tf, dt, T=0.0, tc=1):
         self._dt = dt
-        self._tf = nt * dt
-        self._dtr = nt*dt/self.ntr
+        self._tf = tf
+        self._dtr = tf/self.ntr
         self._T = T
         self._tc = tc
             
@@ -74,18 +73,15 @@ class ArteryNetwork(object):
     
     @staticmethod        
     def inlet_bc(artery, q_in, in_t, dt, **kwargs):
-        q_0_np = q_in(in_t-dt/2) # q_0_n+1/2
+        q_0_np = q_in(in_t+dt/2) # q_0_n+1/2
         q_0_n1 = q_in(in_t) # q_0_n+1
         U_0_n = artery.U0[:,0] # U_0_n
-        U_1_n = artery.U0[:,1] # U_1_n
-        U_12_np = (U_1_n + U_0_n)/2 - dt*(artery.F(U_1_n, j=0) -\
-                artery.F(U_0_n, j=0))/(2*artery.dx) + dt*(artery.S(U_1_n, j=0) +\
+        U_1_n = artery.U0[:,1]
+        U_12_np = (U_1_n + U_0_n)/2 - dt*(artery.F(U_1_n, j=1) -\
+                artery.F(U_0_n, j=0))/(2*artery.dx) + dt*(artery.S(U_1_n, j=1) +\
                 artery.S(U_0_n, j=0))/4 # U_1/2_n+1/2
         q_12_np = U_12_np[1] # q_1/2_n+1/2
-        a_0_n1 = U_0_n[0] - 2*dt*(q_12_np - q_0_np)/artery.dx
-        #print np.array([a_0_n1, q_0_n1])
-        #print artery.A0[0]
-        #sys.exit()
+        a_0_n1 = U_12_np[0] - 2*dt*(q_12_np - q_0_np)/artery.dx
         return np.array([a_0_n1, q_0_n1])
      
     
@@ -146,10 +142,12 @@ class ArteryNetwork(object):
         
         self.timestep()
         
+        
+        
         while self.t < self.tf:
             save = False  
             
-            if i < self.ntr and (abs(tr[i]-self.t) < 1e-4 or self.t >= self.tf-self.dt):
+            if i < self.ntr and (abs(tr[i]-self.t) < self.dtr or self.t >= self.tf-self.dt):
                 save = True
                 i += 1
                 
@@ -162,7 +160,7 @@ class ArteryNetwork(object):
                         in_t = utils.periodic(self.t, self.T)
                     else:
                         in_t = self.t
-                    U_in = ArteryNetwork.inlet_bc(artery, q_in, in_t, self.dt, T=self.T)
+                    U_in = self.inlet_bc(artery, q_in, in_t, self.dt, T=self.T)
                 else:
                     #todo: bifurcation inlet boundary
                     pass
@@ -181,17 +179,19 @@ class ArteryNetwork(object):
                             "CFL condition not fulfilled at time %e. Reduce \
 time step size." % (self.t))
                     sys.exit(1)  
-            
+                    
             self.timestep()
             
             if self.t % (self.tf/10) < self.dt:
                 print "Progress {:}%".format(self._progress)
                 self._progress += 10
+                
         
         # redimensionalise
-        artery.P = 80 + artery.P*self.rho*self.qc**2*760 / (1.01325*10**6*self.rc**4)
-        artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
-        artery.U[1,:,:] = artery.U[1,:,:] * self.qc
+        for artery in self.arteries:
+            artery.P = 80 + artery.P*self.rho*self.qc**2*760 / (1.01325*10**6*self.rc**4)
+            artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
+            artery.U[1,:,:] = artery.U[1,:,:] * self.qc
                 
             
     def dump_results(self, suffix, data_dir):

@@ -37,6 +37,7 @@ class LaxWendroff(object):
                     S(U0[:,0:-2], j=0, k=-2))/4
         U1[:,1:-1] = U0[:,1:-1] - dt*(F(U_np_mp, j=1, k=-1) - F(U_np_mm, j=1, k=-1))/self.dx +\
                     dt*(S(U_np_mp, j=1, k=-1) + S(U_np_mm, j=1, k=-1))/2
+                    
         return U1
         
         
