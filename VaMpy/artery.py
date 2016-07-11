@@ -18,18 +18,16 @@ class Artery(object):
         
     def __init__(self, pos, R, lam, rho, nu, delta, **kwargs):
         self._pos = pos
-        self._R = R
         self._A0 = np.pi*np.power(R, 2)
         self._L = R[0]*lam
-        self._k = kwargs['k']
-        self._Ehr = self.k[0] * np.exp(self.k[1]*R[0]) + self.k[2]
-        self._rho = rho
+        k = kwargs['k']
+        self._f = 4/3 * k[0] * np.exp(k[1]*R[0]) + k[2]
+        self._df = 4/3 * k[0] * k[1] * np.exp(k[1]*R[0])         
         self._nu = nu
         nondim = kwargs['nondim']
-        self._rc = nondim[0]
-        self._qc = nondim[1]
         self._Re = nondim[2]
         self._delta = delta
+        self._depth = kwargs['depth']
         
         
     def initial_conditions(self, u0, ntr):
@@ -45,9 +43,10 @@ before setting initial conditions.')
         
     def mesh(self, nx):
         self._nx = nx
-        self._x = np.linspace(0.0, self.L, nx)
-        self._dx = self.x[1] - self.x[0]
-        self._xgrad = np.gradient(self.R, 2*self.dx)
+        x = np.linspace(0.0, self.L, nx)
+        self._dx = x[1] - x[0]
+        R = np.sqrt(self.A0/np.pi)
+        self._xgrad = np.gradient(R, 2*self.dx)
         
         
     def p(self, a):
@@ -61,7 +60,6 @@ before setting initial conditions.')
     def F(self, U, **kwargs):
         a, q = U
         out = np.zeros(U.shape)
-        f = 4/3 * self.Ehr
         out[0] = q
         if 'j' in kwargs:
             j = kwargs['j']
@@ -72,20 +70,13 @@ before setting initial conditions.')
             a0 = self.A0[j:k]
         else:
             a0 = self.A0
-        out[1] = q*q/a + f * np.sqrt(a0*a)
-        if np.isnan(out[1]).any():
-            print a
-            print q
-            print out[1]
-            sys.exit()
+        out[1] = q*q/a + self.f * np.sqrt(a0*a)
         return out
         
         
     def S(self, U, **kwargs):
         a, q = U
         out = np.zeros(U.shape)
-        f = 4/3 * self.Ehr
-        df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*self.R[0]) 
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
@@ -99,14 +90,14 @@ before setting initial conditions.')
             a0 = self.A0
         R = np.sqrt(a/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a0) +\
-                (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(a0)*df) - a*df) * xgrad
+                (2*np.sqrt(a) * (np.sqrt(np.pi)*self.f +\
+                np.sqrt(a0)*self.df) - a*self.df) * xgrad
         return out
         
 
-    def solve(self, lw, U_in, U_out, t, dt, save, i, **kwargs):
+    def solve(self, lw, U_in, U_out, t, dt, save, i):
         # solve for current timestep
-        U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt, **kwargs)
+        U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt)
         np.copyto(self.U0, U1)
         if save:
             self.P[i,:] = self.p(U1[0,:])
@@ -207,98 +198,57 @@ before setting initial conditions.')
     def pos(self):
         return self._pos
 
-    
-    @property
-    def R(self):
-        return self._R
-        
-        
     @property
     def A0(self):
         return self._A0
-        
         
     @property
     def L(self):
         return self._L
         
-        
     @property
-    def k(self):
-        return self._k
-        
-        
+    def f(self):
+        return self._f
+
     @property
-    def Ehr(self):
-        return self._Ehr
-        
-        
-    @property
-    def rho(self):
-        return self._rho
-        
+    def df(self):
+        return self._df
         
     @property
     def nu(self):
         return self._nu
         
-        
-    @property
-    def init_cond(self):
-        return self._init_cond
-        
-        
-    @property
-    def x(self):
-        return self._x
-        
-        
     @property
     def dx(self):
         return self._dx
-
 
     @property
     def nx(self):
         return self._nx
         
-        
     @property
     def U0(self):
         return self._U0
-        
         
     @U0.setter
     def U0(self, value): 
         self._U0 = value
         
-        
     @property
     def U(self):
         return self._U
-        
         
     @U.setter
     def U(self, value): 
         self._U = value
         
-    
     @property
     def P(self):
         return self._P
         
-        
     @P.setter
     def P(self, value): 
         self._P = value
-        
-    @property
-    def rc(self):
-        return self._rc
-        
-    @property
-    def qc(self):
-        return self._qc
         
     @property
     def Re(self):
@@ -311,3 +261,7 @@ before setting initial conditions.')
     @property
     def xgrad(self):
         return self._xgrad
+        
+    @property
+    def depth(self):
+        return self._depth

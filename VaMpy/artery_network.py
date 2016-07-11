@@ -19,7 +19,7 @@ class ArteryNetwork(object):
     def __init__(self, R, a, b, lam, rho, nu, delta, depth, **kwargs):
         self._depth = depth
         self._arteries = []
-        self.setup_arteries(R, a, b, lam, rho, nu, delta, **kwargs)
+        self.setup_arteries(R, a, b, lam, rho, nu, delta)
         self._t = 0.0
         self._ntr = kwargs['ntr']
         self._progress = 10
@@ -30,9 +30,9 @@ class ArteryNetwork(object):
         self._Re = nondim[2]
         
         
-    def setup_arteries(self, R, a, b, lam, rho, nu, delta, **kwargs):
+    def setup_arteries(self, R, a, b, lam, rho, nu, delta):
         pos = 0
-        self.arteries.append(Artery(pos, R, lam, rho, nu, delta, **kwargs)) 
+        self.arteries.append(Artery(pos, R, lam, rho, nu, delta, depth=0)) 
         pos += 1
         radii = [R]
         for i in range(1,self.depth):
@@ -40,9 +40,11 @@ class ArteryNetwork(object):
             for radius in radii:    
                 ra = radius * a
                 rb = radius * b
-                self.arteries.append(Artery(pos, ra, lam, rho, nu, delta, **kwargs))
+                self.arteries.append(Artery(pos, ra, lam, rho, nu, delta,
+                                            depth=i))
                 pos += 1
-                self.arteries.append(Artery(pos, rb, lam, rho, nu, delta, **kwargs))
+                self.arteries.append(Artery(pos, rb, lam, rho, nu, delta,
+                                            depth=i))
                 pos += 1
                 new_radii.append(ra)
                 new_radii.append(rb)
@@ -72,7 +74,7 @@ class ArteryNetwork(object):
             
     
     @staticmethod        
-    def inlet_bc(artery, q_in, in_t, dt, **kwargs):
+    def inlet_bc(artery, q_in, in_t, dt):
         q_0_np = q_in(in_t+dt/2) # q_0_n+1/2
         q_0_n1 = q_in(in_t) # q_0_n+1
         U_0_n = artery.U0[:,0] # U_0_n
@@ -86,7 +88,7 @@ class ArteryNetwork(object):
      
     
     @staticmethod
-    def outlet_bc(artery, dt, rc, qc, rho, **kwargs):
+    def windkessel(artery, dt, rc, qc, rho):
         R1 = 4100*rc**4/(qc*rho)
         R2 = 1900*rc**4/(qc*rho)
         Ct = 8.7137e-6*rho*qc**2/rc**7
@@ -120,8 +122,20 @@ class ArteryNetwork(object):
         
     
     @staticmethod
-    def bifurcation_bc(artery, p, d1, d2):
-        pass
+    def bifurcation(artery, d1, d2, dt):
+        x0 = np.zeros(18)
+        Dfr = np.zeros((18, 18)) # Jacobian
+        Dfr[0,0] = Dfr[1,3] = Dfr[2,6] = Dfr[3,9] = Dfr[4,12] = Dfr[5,15] = -1
+        Dfr[6,1] = Dfr[7,4] = Dfr[8,7] = Dfr[9,10] = Dfr[10,13] = Dfr[11,16] = -1
+        Dfr[12,1] = Dfr[13,0] = -1
+        Dfr[6,2] = Dfr[7,5] = Dfr[8,8] = Dfr[9,11] = Dfr[10,14] = Dfr[11,17] = 0.5
+        Dfr[12,4] = Dfr[12,7] = Dfr[13,3] = Dfr[13,6] = 1.0
+        Dfr[3,2] = -dt/artery.dx
+        R0_p_M12 = utils.extrapolate(artery.L+artery.dx/2,
+                    [artery.L-artery.dx, artery.L],
+                    [np.sqrt(artery.A0[-2]/np.pi), np.sqrt(artery.A0[-1]/np.pi)]) 
+        Dfr[2,0] = -2*dt/artery.dx * x[2]/x[11] -\
+                    dt/2 * 2*np.pi*R0_p_M12/(delta*Re*x[11])
     
     
     @staticmethod
@@ -137,13 +151,8 @@ class ArteryNetwork(object):
     
     def solve(self, q_in, p_out, T):
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
-        #tr = np.linspace(0, self.tf, self.ntr)
         i = 0
-        
         self.timestep()
-        
-        
-        
         while self.t < self.tf:
             save = False  
             
@@ -160,19 +169,20 @@ class ArteryNetwork(object):
                         in_t = utils.periodic(self.t, self.T)
                     else:
                         in_t = self.t
-                    U_in = self.inlet_bc(artery, q_in, in_t, self.dt, T=self.T)
-                else:
-                    #todo: bifurcation inlet boundary
-                    pass
-                if artery.pos >= (len(self.arteries) - 2**(self.depth-1)):
+                    U_in = self.inlet_bc(artery, q_in, in_t, self.dt)
+                elif artery.pos >= (len(self.arteries) - 2**(self.depth-1)):
                     # outlet boundary condition
-                    U_out = ArteryNetwork.outlet_bc(artery, self.dt, self.rc,
-                                                    self.qc, self.rho, T=T)
+                    U_out = self.windkessel(artery, self.dt, self.rc,
+                                                    self.qc, self.rho)
                 else:
-                    #todo: bifurcation outlet condition
-                    pass
+                    d1_pos = artery.pos + 2**artery.depth
+                    d2_pos = d1_pos + 1
+                    d1 = self.arteries[d1_pos]
+                    d2 = self.arteries[d2_pos]
+                    U_out, U_in1, U_in2 = self.bifurcation(artery, d1, d2,
+                                                           self.dt)
                 
-                artery.solve(lw, U_in, U_out, self.t, self.dt, save, i-1, T=self.T)
+                artery.solve(lw, U_in, U_out, self.t, self.dt, save, i-1)
                 
                 if ArteryNetwork.cfl_condition(artery, self.dt) == False:
                     raise ValueError(

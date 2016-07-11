@@ -21,30 +21,28 @@ class LaxWendroff(object):
         self._dx = dx
         
     
-    def solve(self, U0, U_in, U_out, t, F, S, dt, **kwargs):
+    def solve(self, U0, U_in, U_out, t, F, S, dt):
         # U0: previous timestep, U1 current timestep
         U1 = np.zeros((2,self.nx))
         # apply boundary conditions
         U1[:,0] = U_in
         U1[:,-1] = U_out
-        
         # calculate half step
         U_np_mp = (U0[:,2:]+U0[:,1:-1])/2 - dt*(F(U0[:,2:], j=2, k=self.nx)-\
-                    F(U0[:,1:-1], j=1, k=-1))/(2*self.dx) + dt*(S(U0[:,2:], j=2, k=self.nx)+\
-                    S(U0[:,1:-1], j=1, k=-1))/4
+                    F(U0[:,1:-1], j=1, k=-1))/(2*self.dx) +\
+                    dt*(S(U0[:,2:], j=2, k=self.nx)+S(U0[:,1:-1], j=1, k=-1))/4
         U_np_mm = (U0[:,1:-1]+U0[:,0:-2])/2 - dt*(F(U0[:,1:-1], j=1, k=-1)-\
-                    F(U0[:,0:-2], j=0, k=-2))/(2*self.dx) + dt*(S(U0[:,1:-1], j=1, k=-1)+\
-                    S(U0[:,0:-2], j=0, k=-2))/4
-        U1[:,1:-1] = U0[:,1:-1] - dt*(F(U_np_mp, j=1, k=-1) - F(U_np_mm, j=1, k=-1))/self.dx +\
-                    dt*(S(U_np_mp, j=1, k=-1) + S(U_np_mm, j=1, k=-1))/2
-                    
+                    F(U0[:,0:-2], j=0, k=-2))/(2*self.dx) +\
+                    dt*(S(U0[:,1:-1], j=1, k=-1)+S(U0[:,0:-2], j=0, k=-2))/4
+        U1[:,1:-1] = U0[:,1:-1] - dt*(F(U_np_mp, j=1, k=-1)-\
+                    F(U_np_mm, j=1, k=-1))/self.dx + dt*(S(U_np_mp, j=1, k=-1)+\
+                    S(U_np_mm, j=1, k=-1))/2
         return U1
         
         
     @property   
     def nx(self):
         return self._nx
-        
         
     @property   
     def dx(self):
