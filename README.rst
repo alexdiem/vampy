@@ -11,9 +11,9 @@ This is the README file for the project.
 Installation
 ---------------------------------------
 
-The package is available on Bitbucket. To clone the package run
+The package is available on Github. To clone the package run
 
-git clone https://akdiem@bitbucket.org/akdiem/VaMpy.git
+git clone https://github.com/akdiem/VaMpy.git
 
 To install run
 
