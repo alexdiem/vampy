@@ -13,7 +13,7 @@ Installation
 
 The package is available on Bitbucket. To clone the package run
 
-git clone https://akdiem@bitbucket.org/akdiem/pyFDM.git
+git clone https://akdiem@bitbucket.org/akdiem/VaMpy.git
 
 To install run
 
