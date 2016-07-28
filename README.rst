@@ -13,11 +13,15 @@ Installation
 
 The package is available on Github. To clone the package run
 
+```
 git clone https://github.com/akdiem/VaMpy.git
+```
 
 To install run
 
+```
 python setup.py
+```
 
 
 ---------------------------------------
