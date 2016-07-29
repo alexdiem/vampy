@@ -102,7 +102,7 @@ before setting initial conditions.')
         R = np.sqrt(a0/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*self.f +\
-                np.sqrt(a0)*self.df) - a*self.df) * xgrad / 2
+                np.sqrt(a0)*self.df) - a*self.df) * xgrad/2
         return out
         
 
@@ -112,8 +112,7 @@ before setting initial conditions.')
         np.copyto(self.U0, U1)
         if save:
             self.P[i,:] = self.p(U1[0,:])
-            np.copyto(self.U[0,i,:], U1[0])
-            np.copyto(self.U[1,i,:], U1[1])
+            np.copyto(self.U[:,i,:], U1)
         
         
     def dump_results(self, suffix, data_dir):
