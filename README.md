@@ -1,4 +1,4 @@
-.. image:: VaMpy_logo.png
+![VaMpy logo](VaMpy_logo.png)
 
 An implementation of finite difference methods (FDM) to solve partial differential equations (PDE).
 
@@ -11,13 +11,17 @@ This is the README file for the project.
 Installation
 ---------------------------------------
 
-The package is available on Bitbucket. To clone the package run
+The package is available on Github. To clone the package run
 
-git clone https://akdiem@bitbucket.org/akdiem/pyFDM.git
+```
+git clone https://github.com/akdiem/VaMpy.git
+```
 
 To install run
 
+```
 python setup.py
+```
 
 
 ---------------------------------------

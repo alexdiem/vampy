@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from pyFDM.utils import *
+from vampy.utils import *
 
 
 eps = 1e-5
