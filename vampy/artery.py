@@ -21,8 +21,9 @@ class Artery(object):
         self._A0 = np.pi*R*R
         self._L = R[0]*lam
         k = kwargs['k']
-        self._f = 4/3 * k[0] * np.exp(k[1]*R[0]) + k[2]
-        self._df = 4/3 * k[0] * k[1] * np.exp(k[1]*R[0])         
+        Ehr = k[0] * np.exp(k[1]*R) + k[2]
+        self._f = 4/3 * Ehr
+        self._df = 4/3 * k[0] * k[1] * np.exp(k[1]*R)     
         self._nu = nu
         nondim = kwargs['nondim']
         self._Re = nondim[2]
@@ -46,17 +47,7 @@ before setting initial conditions.')
         x = np.linspace(0.0, self.L, nx)
         self._dx = x[1] - x[0]
         R = np.sqrt(self.A0/np.pi)
-        self._xgrad = np.gradient(R, self.dx)
-        #self._xgrad = self.x_grad(R)     
-        
-        
-    def x_grad(self, f):
-        dx = self.dx
-        xgrad = np.empty_like(f, dtype=float)
-        xgrad[1:-1] = (f[2:] - f[:-2])/2.0
-        xgrad[0] = (f[1] - f[0])
-        xgrad[-1] = (f[-1] - f[-2])
-        return xgrad/dx
+        self._xgrad = np.gradient(R, 2*self.dx)
         
         
     def p(self, a):
@@ -75,13 +66,15 @@ before setting initial conditions.')
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
+            f = self.f[j]
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
             a0 = self.A0[j:k]
+            f = self.f[j:k]
         else:
             a0 = self.A0
-        out[1] = q*q/a + self.f * np.sqrt(a0*a)
+        out[1] = q*q/a + f * np.sqrt(a0*a)
         return out
         
         
@@ -92,17 +85,21 @@ before setting initial conditions.')
             j = kwargs['j']
             a0 = self.A0[j]
             xgrad = self.xgrad[j]
+            f = self.f[j]
+            df = self.df[j]
         elif 'k' in kwargs:
             j = kwargs['j']
             k = kwargs['k']
             a0 = self.A0[j:k]
             xgrad = self.xgrad[j:k]
+            f = self.f[j:k]
+            df = self.df[j:k]
         else:
             a0 = self.A0
         R = np.sqrt(a0/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
-                (2*np.sqrt(a) * (np.sqrt(np.pi)*self.f +\
-                np.sqrt(a0)*self.df) - a*self.df) * xgrad/2
+                (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
+                np.sqrt(a0)*df) - a*df) * xgrad
         return out
         
 
