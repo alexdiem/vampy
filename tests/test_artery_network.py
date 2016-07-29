@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from pyFDM.artery_network import *
+from vampy.artery_network import *
 from scipy.interpolate import interp1d
 
 

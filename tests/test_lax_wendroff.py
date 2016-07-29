@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
-from pyFDM.lax_wendroff import *
-from pyFDM.artery import *
+from vampy.lax_wendroff import *
+from vampy.artery import *
 import numpy as np
 
 
