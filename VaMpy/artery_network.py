@@ -19,7 +19,7 @@ class ArteryNetwork(object):
     def __init__(self, R, a, b, lam, rho, nu, delta, depth, **kwargs):
         self._depth = depth
         self._arteries = []
-        self.setup_arteries(R, a, b, lam, rho, nu, delta)
+        self.setup_arteries(R, a, b, lam, rho, nu, delta, **kwargs)
         self._t = 0.0
         self._ntr = kwargs['ntr']
         self._progress = 10
@@ -30,7 +30,7 @@ class ArteryNetwork(object):
         self._Re = nondim[2]
         
         
-    def setup_arteries(self, R, a, b, lam, rho, nu, delta):
+    def setup_arteries(self, R, a, b, lam, rho, nu, delta, **kwargs):
         pos = 0
         self.arteries.append(Artery(pos, R, lam, rho, nu, delta, depth=0, **kwargs)) 
         pos += 1

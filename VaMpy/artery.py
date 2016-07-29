@@ -102,7 +102,7 @@ before setting initial conditions.')
         R = np.sqrt(a0/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*self.f +\
-                np.sqrt(a0)*self.df) - a*self.df) * xgrad
+                np.sqrt(a0)*self.df) - a*self.df) * xgrad / 2
         return out
         
 
