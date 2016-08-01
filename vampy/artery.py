@@ -22,13 +22,14 @@ class Artery(object):
         self._L = R[0]*lam
         k = kwargs['k']
         Ehr = k[0] * np.exp(k[1]*R) + k[2]
-        self._f = 4/3 * Ehr
-        self._df = 4/3 * k[0] * k[1] * np.exp(k[1]*R)     
+        self._f = 4 * Ehr/3
+        self._df = 4 * k[0] * k[1] * np.exp(k[1]*R)/3     
         self._nu = nu
         nondim = kwargs['nondim']
         self._Re = nondim[2]
         self._delta = delta
         self._depth = kwargs['depth']
+        self._xgrad = R * np.log(R[-1]/R[0]) / self.L
         
         
     def initial_conditions(self, u0, ntr):
@@ -46,8 +47,8 @@ before setting initial conditions.')
         self._nx = nx
         x = np.linspace(0.0, self.L, nx)
         self._dx = x[1] - x[0]
+        print self.dx
         R = np.sqrt(self.A0/np.pi)
-        self._xgrad = np.gradient(R, 2*self.dx)
         
         
     def p(self, a):
@@ -73,7 +74,7 @@ before setting initial conditions.')
             a0 = self.A0[j:k]
             f = self.f[j:k]
         else:
-            a0 = self.A0
+            raise IndexError("Required to supply at least one index in function F.")
         out[1] = q*q/a + f * np.sqrt(a0*a)
         return out
         
@@ -84,6 +85,7 @@ before setting initial conditions.')
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
+            r = np.sqrt(a/np.pi)
             xgrad = self.xgrad[j]
             f = self.f[j]
             df = self.df[j]
@@ -95,11 +97,11 @@ before setting initial conditions.')
             f = self.f[j:k]
             df = self.df[j:k]
         else:
-            a0 = self.A0
+            raise IndexError("Required to supply at least one index in function S.")
         R = np.sqrt(a0/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(a0)*df) - a*df) * xgrad
+                np.sqrt(a0)*df) - a*df) * xgrad/2
         return out
         
 
