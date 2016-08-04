@@ -23,13 +23,12 @@ class Artery(object):
         k = kwargs['k']
         Ehr = k[0] * np.exp(k[1]*R) + k[2]
         self._f = 4 * Ehr/3
-        self._df = 4 * k[0] * k[1] * np.exp(k[1]*R)/3     
+        self._df = 4/3 * k[0] * k[1] * np.exp(k[1]*R)     
         self._nu = nu
         nondim = kwargs['nondim']
         self._Re = nondim[2]
         self._delta = delta
         self._depth = kwargs['depth']
-        self._xgrad = R * np.log(R[-1]/R[0]) / self.L
         
         
     def initial_conditions(self, u0, ntr):
@@ -47,8 +46,9 @@ before setting initial conditions.')
         self._nx = nx
         x = np.linspace(0.0, self.L, nx)
         self._dx = x[1] - x[0]
-        print self.dx
         R = np.sqrt(self.A0/np.pi)
+        #self._xgrad = R * np.log(R[-1]/R[0]) / self.L
+        self._xgrad = np.gradient(R, 2*self.dx)
         
         
     def p(self, a):
@@ -85,7 +85,6 @@ before setting initial conditions.')
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
-            r = np.sqrt(a/np.pi)
             xgrad = self.xgrad[j]
             f = self.f[j]
             df = self.df[j]
@@ -98,11 +97,112 @@ before setting initial conditions.')
             df = self.df[j:k]
         else:
             raise IndexError("Required to supply at least one index in function S.")
-        R = np.sqrt(a0/np.pi)
+        R = np.sqrt(a/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(a0)*df) - a*df) * xgrad/2
+                np.sqrt(a0)*df) - a*df) * xgrad
         return out
+        
+        
+    def dBdx(self, l, xi):
+        if l == self.L+self.dx/2:
+            x_0 = self.x[-2]
+            x_1 = self.x[-1]
+            f_0 = self.f[-2]
+            f_1 = self.f[-1]
+            A0_0 = self.A0[-2]
+            A0_1 = self.A0[-1]
+        else:
+            x_0 = self.x[1]
+            x_1 = self.x[0]
+            f_0 = self.f[1]
+            f_1 = self.f[0]
+            A0_0 = self.A0[1]
+            A0_1 = self.A0[0]
+        f_l = utils.extrapolate(l, [x_0, x_1], [f_0, f_1])    
+        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1])   
+        return f_l/2 * np.sqrt(A0_l/xi)
+        
+        
+    def dBdxdxi(self, l, xi):
+        if l == self.L+self.dx/2:
+            x_0 = self.x[-2]
+            x_1 = self.x[-1]
+            f_0 = self.f[-2]
+            f_1 = self.f[-1]
+            df_0 = self.df[-2]
+            df_1 = self.df[-1]
+            A0_0 = self.A0[-2]
+            A0_1 = self.A0[-1]
+            xgrad_0 = self.xgrad[-2]
+            xgrad_1 = self.xgrad[-1]
+        else:
+            x_0 = self.x[1]
+            x_1 = self.x[0]
+            f_0 = self.f[1]
+            f_1 = self.f[0]
+            df_0 = self.df[1]
+            df_1 = self.df[0]
+            A0_0 = self.A0[1]
+            A0_1 = self.A0[0]
+            xgrad_0 = self.xgrad[1]
+            xgrad_1 = self.xgrad[0]
+        f_l = utils.extrapolate(l, [x_0, x_1], [f_0, f_1])   
+        df_l = utils.extrapolate(l, [x_0, x_1], [df_0, df_1])   
+        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1])   
+        xgrad_l = utils.extrapolate(l, [x_0, x_1], [xgrad_0, xgrad_1]) 
+        return (1/(2*np.sqrt(xi)) * (f_l*np.sqrt(np.pi) +\
+                                    df_l*np.sqrt(A0_l)) - df_l) * xgrad_l
+                                    
+                                    
+    def dFdxi2(self, l, xi1, xi2):
+        if l == self.L+self.dx/2:
+            x_0 = self.x[-2]
+            x_1 = self.x[-1]
+            R0_0 = np.sqrt(self.A0[-2]/np.pi)
+            R0_1 = np.sqrt(self.A0[-1]/np.pi)
+        else:
+            x_0 = self.x[1]
+            x_1 = self.x[0]
+            R0_0 = np.sqrt(self.A0[1]/np.pi)
+            R0_1 = np.sqrt(self.A0[0]/np.pi)
+        R0_l = utils.extrapolate(l, [x_0, x_1], [R0_0, R0_1])
+        return 2*np.pi*R0_l*xi1/(self.delta*self.Re*xi2**2)
+        
+        
+    def dFdxi1(self, l, xi1, xi2):
+        if l == self.L+self.dx/2:
+            x_0 = self.x[-2]
+            x_1 = self.x[-1]
+            R0_0 = np.sqrt(self.A0[-2]/np.pi)
+            R0_1 = np.sqrt(self.A0[-1]/np.pi)
+        else:
+            x_0 = self.x[1]
+            x_1 = self.x[0]
+            R0_0 = np.sqrt(self.A0[1]/np.pi)
+            R0_1 = np.sqrt(self.A0[0]/np.pi)
+        R0_l = utils.extrapolate(l, [x_0, x_1], [R0_0, R0_1])
+        return 2*np.pi*R0_l/(self.delta*self.Re*xi2)
+        
+        
+    def dpdx(self, l, xi):
+        if l == self.L+self.dx/2:
+            x_0 = self.x[-2]
+            x_1 = self.x[-1]
+            f_0 = self.f[-2]
+            f_1 = self.f[-1]
+            A0_0 = self.A0[-2]
+            A0_1 = self.A0[-1]
+        else:
+            x_0 = self.x[1]
+            x_1 = self.x[0]
+            f_0 = self.f[1]
+            f_1 = self.f[0]
+            A0_0 = self.A0[1]
+            A0_1 = self.A0[0]
+        f_l = utils.extrapolate(l, [x_0, x_1], [f_0, f_1])   
+        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1])   
+        return -f_l/2 * np.sqrt(A0_l/xi**3)
         
 
     def solve(self, lw, U_in, U_out, t, dt, save, i):

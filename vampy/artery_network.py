@@ -89,9 +89,9 @@ class ArteryNetwork(object):
     
     @staticmethod
     def outlet_bc(artery, dt, rc, qc, rho):
-        R1 = 4100*rc**4/(qc*rho)
-        R2 = 1900*rc**4/(qc*rho)
-        Ct = 8.7137e-6*rho*qc**2/rc**7
+        R1 = 4100*rc**4/(qc*rho) # olufsen 4100
+        R2 = 1900*rc**4/(qc*rho) # olufsen 1900
+        Ct = 8.7137e-6*rho*qc**2/rc**7 # 8.7137e-6
         a_n = artery.U0[0,-1]
         q_n = artery.U0[1,-1]
         p_out = p_o = artery.p(a_n)[-1] # initial guess for p_out
@@ -122,20 +122,42 @@ class ArteryNetwork(object):
         
     
     @staticmethod
-    def bifurcation(artery, d1, d2, dt):
+    def bifurcation(parent, d1, d2, dt):
         x0 = np.zeros(18)
+        theta = dt/artery.dx
+        gamma = dt/2
+        M12 = parent.L + parent.dx/2
+        D1_12 = d1.x[0] - d1.dx/2
+        D2_12 = d2.x[0] - d2.dx/2
+        zeta7 = -parent.dpdx(parent.L, x[10])
+        zeta10 = -parent.dpdx(parent.L, x[9])
         Dfr = np.zeros((18, 18)) # Jacobian
         Dfr[0,0] = Dfr[1,3] = Dfr[2,6] = Dfr[3,9] = Dfr[4,12] = Dfr[5,15] = -1
         Dfr[6,1] = Dfr[7,4] = Dfr[8,7] = Dfr[9,10] = Dfr[10,13] = Dfr[11,16] = -1
         Dfr[12,1] = Dfr[13,0] = -1
         Dfr[6,2] = Dfr[7,5] = Dfr[8,8] = Dfr[9,11] = Dfr[10,14] = Dfr[11,17] = 0.5
         Dfr[12,4] = Dfr[12,7] = Dfr[13,3] = Dfr[13,6] = 1.0
-        Dfr[3,2] = -dt/artery.dx
-        R0_p_M12 = utils.extrapolate(artery.L+artery.dx/2,
-                    [artery.L-artery.dx, artery.L],
-                    [np.sqrt(artery.A0[-2]/np.pi), np.sqrt(artery.A0[-1]/np.pi)]) 
-        Dfr[2,0] = -2*dt/artery.dx * x[2]/x[11] -\
-                    dt/2 * 2*np.pi*R0_p_M12/(delta*Re*x[11])
+        Dfr[3,2] = -theta
+        Dfr[2,0] = -theta*2*x[2]/x[11] + gamma*parent.dFdxi1(M12, x[2], x[11])
+        Dfr[11,0] = theta * (x[2]**2/x[11]**2 - parent.dBdx(M12,x[11])) +\
+                    gamma * (parent.dFdxi2(M12, x[2], x[11]) +\
+                            parent.dBdxdxi(M12, x[11]))
+        Dfr[5,1] = theta*2*x[5]/x[14] + gamma*d1.dFdxi1(D1_12, x[5], x[14])
+        Dfr[14,1] = theta * (-x[5]**2/x[14]**2 + d1.dBdx(D1_12,x[14])) +\
+                    gamma * (d1.dFdxi2(D1_12, x[5], x[14]) +\
+                            d1.dBdxdxi(D1_12, x[14]))
+        Dfr[8,2] = theta*2*x[8]/x[17] + gamma*d2.dFdxi1(D2_12, x[8], x[17])
+        Dfr[17,2] = theta * (-x[8]**2/x[17]**2 + d2.dBdx(D2_12,x[17])) +\
+                    gamma * (d2.dFdxi2(D2_12, x[8], x[17]) +\
+                            d2.dBdxdxi(D2_12, x[17]))
+        Dfr[10,14] = zeta7
+        Dfr[13,14] = d1.dpdx(d1.x[0], x[13])
+        Dfr[10,15] = zeta7
+        Dfr[16,15] = d2.dpdx(d1.x[0], x[16])
+        Dfr[9,16] = zeta10
+        Dfr[12,16] = d1.dpdx(d1.x[0], x[12])
+        Dfr[9,17] = zeta10
+        Dfr[15,17] = d2.dpdx(d1.x[0], x[15])
     
     
     @staticmethod
