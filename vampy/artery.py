@@ -6,6 +6,8 @@ import numpy as np
 import sys
 import matplotlib.pylab as plt
 
+import utils
+
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
@@ -106,15 +108,15 @@ before setting initial conditions.')
         
     def dBdx(self, l, xi):
         if l == self.L+self.dx/2:
-            x_0 = self.x[-2]
-            x_1 = self.x[-1]
+            x_0 = self.L-self.dx
+            x_1 = self.L
             f_0 = self.f[-2]
             f_1 = self.f[-1]
             A0_0 = self.A0[-2]
             A0_1 = self.A0[-1]
         else:
-            x_0 = self.x[1]
-            x_1 = self.x[0]
+            x_0 = self.dx
+            x_1 = 0.0
             f_0 = self.f[1]
             f_1 = self.f[0]
             A0_0 = self.A0[1]
@@ -126,8 +128,8 @@ before setting initial conditions.')
         
     def dBdxdxi(self, l, xi):
         if l == self.L+self.dx/2:
-            x_0 = self.x[-2]
-            x_1 = self.x[-1]
+            x_0 = self.L-self.dx
+            x_1 = self.L
             f_0 = self.f[-2]
             f_1 = self.f[-1]
             df_0 = self.df[-2]
@@ -137,8 +139,8 @@ before setting initial conditions.')
             xgrad_0 = self.xgrad[-2]
             xgrad_1 = self.xgrad[-1]
         else:
-            x_0 = self.x[1]
-            x_1 = self.x[0]
+            x_0 = self.dx
+            x_1 = 0.0
             f_0 = self.f[1]
             f_1 = self.f[0]
             df_0 = self.df[1]
@@ -157,13 +159,13 @@ before setting initial conditions.')
                                     
     def dFdxi2(self, l, xi1, xi2):
         if l == self.L+self.dx/2:
-            x_0 = self.x[-2]
-            x_1 = self.x[-1]
+            x_0 = self.L-self.dx
+            x_1 = self.L
             R0_0 = np.sqrt(self.A0[-2]/np.pi)
             R0_1 = np.sqrt(self.A0[-1]/np.pi)
         else:
-            x_0 = self.x[1]
-            x_1 = self.x[0]
+            x_0 = self.dx
+            x_1 = 0.0
             R0_0 = np.sqrt(self.A0[1]/np.pi)
             R0_1 = np.sqrt(self.A0[0]/np.pi)
         R0_l = utils.extrapolate(l, [x_0, x_1], [R0_0, R0_1])
@@ -172,13 +174,13 @@ before setting initial conditions.')
         
     def dFdxi1(self, l, xi1, xi2):
         if l == self.L+self.dx/2:
-            x_0 = self.x[-2]
-            x_1 = self.x[-1]
+            x_0 = self.L-self.dx
+            x_1 = self.L
             R0_0 = np.sqrt(self.A0[-2]/np.pi)
             R0_1 = np.sqrt(self.A0[-1]/np.pi)
         else:
-            x_0 = self.x[1]
-            x_1 = self.x[0]
+            x_0 = self.dx
+            x_1 = 0.0
             R0_0 = np.sqrt(self.A0[1]/np.pi)
             R0_1 = np.sqrt(self.A0[0]/np.pi)
         R0_l = utils.extrapolate(l, [x_0, x_1], [R0_0, R0_1])
@@ -187,15 +189,15 @@ before setting initial conditions.')
         
     def dpdx(self, l, xi):
         if l == self.L+self.dx/2:
-            x_0 = self.x[-2]
-            x_1 = self.x[-1]
+            x_0 = self.L-self.dx
+            x_1 = self.L
             f_0 = self.f[-2]
             f_1 = self.f[-1]
             A0_0 = self.A0[-2]
             A0_1 = self.A0[-1]
         else:
-            x_0 = self.x[1]
-            x_1 = self.x[0]
+            x_0 = self.dx
+            x_1 = 0.0
             f_0 = self.f[1]
             f_1 = self.f[0]
             A0_0 = self.A0[1]
