@@ -18,15 +18,13 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, R, lam, rho, nu, delta, **kwargs):
+    def __init__(self, pos, Ru, Rd, lam, rho, nu, delta, **kwargs):
         self._pos = pos
-        self._A0 = np.pi*R*R
-        self._L = R[0]*lam
-        k = kwargs['k']
-        Ehr = k[0] * np.exp(k[1]*R) + k[2]
-        self._f = 4 * Ehr/3
-        self._df = 4/3 * k[0] * k[1] * np.exp(k[1]*R)     
+        self._Ru = Ru
+        self._Rd = Rd
+        self._L = Ru*lam
         self._nu = nu
+        self._k = kwargs['k']
         nondim = kwargs['nondim']
         self._Re = nondim[2]
         self._delta = delta
@@ -44,12 +42,17 @@ before setting initial conditions.')
         self.U0[1,:].fill(u0)
         
         
-    def mesh(self, nx):
-        self._nx = nx
-        x = np.linspace(0.0, self.L, nx)
-        self._dx = x[1] - x[0]
-        R = np.sqrt(self.A0/np.pi)
-        #self._xgrad = R * np.log(R[-1]/R[0]) / self.L
+    def mesh(self, dx):
+        self._dx = dx
+        self._nx = int(self.L/dx)
+        if self.nx != self.L/dx:
+            self.L = dx * self.nx
+        K = np.log(self.Rd/self.Ru)/self.L
+        R = self.Ru * np.exp(K*np.linspace(0.0, self.L, self.nx))
+        self._A0 = R*R*np.pi
+        Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
+        self._f = 4 * Ehr/3
+        self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)     
         self._xgrad = np.gradient(R, 2*self.dx)
         
         
@@ -122,7 +125,7 @@ before setting initial conditions.')
             A0_0 = self.A0[1]
             A0_1 = self.A0[0]
         f_l = utils.extrapolate(l, [x_0, x_1], [f_0, f_1])    
-        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1])   
+        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1]) 
         return f_l/2 * np.sqrt(A0_l/xi)
         
         
@@ -203,7 +206,7 @@ before setting initial conditions.')
             A0_0 = self.A0[1]
             A0_1 = self.A0[0]
         f_l = utils.extrapolate(l, [x_0, x_1], [f_0, f_1])   
-        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1])   
+        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1])  
         return -f_l/2 * np.sqrt(A0_l/xi**3)
         
 
@@ -311,8 +314,12 @@ before setting initial conditions.')
         return self._pos
     
     @property
-    def R(self):
-        return self._R
+    def Ru(self):
+        return self._Ru
+        
+    @property
+    def Rd(self):
+        return self._Rd
         
     @property
     def A0(self):
@@ -321,6 +328,14 @@ before setting initial conditions.')
     @property
     def L(self):
         return self._L
+        
+    @L.setter
+    def L(self, value): 
+        self._L = value
+        
+    @property
+    def k(self):
+        return self._k
         
     @property
     def f(self):

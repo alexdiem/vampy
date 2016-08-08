@@ -18,10 +18,10 @@ class ArteryNetwork(object):
     """
     
     
-    def __init__(self, R, a, b, lam, rho, nu, delta, depth, **kwargs):
+    def __init__(self, Ru, Rd, a, b, lam, rho, nu, delta, depth, **kwargs):
         self._depth = depth
         self._arteries = []
-        self.setup_arteries(R, a, b, lam, rho, nu, delta, **kwargs)
+        self.setup_arteries(Ru, Rd, a, b, lam, rho, nu, delta, **kwargs)
         self._t = 0.0
         self._ntr = kwargs['ntr']
         self._progress = 10
@@ -32,26 +32,33 @@ class ArteryNetwork(object):
         self._Re = nondim[2]
         
         
-    def setup_arteries(self, R, a, b, lam, rho, nu, delta, **kwargs):
+    def setup_arteries(self, Ru, Rd, a, b, lam, rho, nu, delta, **kwargs):
         pos = 0
-        self.arteries.append(Artery(pos, R, lam, rho, nu, delta, depth=0,
+        self.arteries.append(Artery(pos, Ru, Rd, lam, rho, nu, delta, depth=0,
                                     **kwargs)) 
         pos += 1
-        radii = [R]
+        radii_u = [Ru]
+        radii_d = [Rd]
         for i in range(1,self.depth):
-            new_radii = []
-            for radius in radii:    
-                ra = radius * a
-                rb = radius * b
-                self.arteries.append(Artery(pos, ra, lam, rho, nu, delta,
+            new_radii_u = []
+            new_radii_d = []
+            for i in range(len(radii_u)):    
+                ra_u = radii_u[i] * a
+                rb_u = radii_u[i] * b
+                ra_d = radii_d[i] * a
+                rb_d = radii_d[i] * b
+                self.arteries.append(Artery(pos, ra_u, ra_d, lam, rho, nu, delta,
                                             depth=i, **kwargs))
                 pos += 1
-                self.arteries.append(Artery(pos, rb, lam, rho, nu, delta,
+                self.arteries.append(Artery(pos, rb_u, ra_d, lam, rho, nu, delta,
                                             depth=i, **kwargs))
                 pos += 1
-                new_radii.append(ra)
-                new_radii.append(rb)
-            radii = new_radii
+                new_radii_u.append(ra_u)
+                new_radii_u.append(rb_u)
+                new_radii_d.append(ra_d)
+                new_radii_d.append(rb_d)
+            radii_u = new_radii_u
+            radii_d = new_radii_d
             
             
     def initial_conditions(self, u0, ntr):
@@ -170,24 +177,24 @@ class ArteryNetwork(object):
                 (parent.S(parent.U0[:,-1], j=-1) +\
                 parent.S(parent.U0[:,-2], j=-2))/2)
         U_d1_np = (d1.U0[:,1] + d1.U0[:,0])/2 +\
-                gamma * (-(d1.F(parent.U0[:,1], j=1) -\
+                gamma * (-(d1.F(d1.U0[:,1], j=1) -\
                 d1.F(d1.U0[:,0], j=0))/d1.dx + (d1.S(d1.U0[:,1], j=1) +\
                 d1.S(d1.U0[:,0], j=0))/2)
         U_d2_np = (d2.U0[:,1] + d2.U0[:,0])/2 +\
-                gamma * (-(d2.F(parent.U0[:,1], j=1) -\
+                gamma * (-(d2.F(d2.U0[:,1], j=1) -\
                 d2.F(d2.U0[:,0], j=0))/d2.dx + (d2.S(d2.U0[:,1], j=1) +\
                 d2.S(d2.U0[:,0], j=0))/2)
-        f_p_mp = utils.extrapolate(parent.L-parent.dx/2,
+        f_p_mp = utils.extrapolate(parent.L+parent.dx/2,
                 [parent.L-parent.dx, parent.L], [parent.f[-2], parent.f[-1]])
-        f_d1_mp = utils.extrapolate(d1.dx/2, [d1.dx, 0.0],
+        f_d1_mp = utils.extrapolate(-d1.dx/2, [d1.dx, 0.0],
                                     [d1.f[1], d1.f[0]])
-        f_d2_mp = utils.extrapolate(d2.dx/2, [d2.dx, 0.0],
+        f_d2_mp = utils.extrapolate(-d2.dx/2, [d2.dx, 0.0],
                                     [d2.f[1], d2.f[0]])
-        A0_p_mp = utils.extrapolate(parent.L-parent.dx/2,
+        A0_p_mp = utils.extrapolate(parent.L+parent.dx/2,
                 [parent.L-parent.dx, parent.L], [parent.A0[-2], parent.A0[-1]])
-        A0_d1_mp = utils.extrapolate(d1.dx/2, [d1.dx, 0.0],
+        A0_d1_mp = utils.extrapolate(-d1.dx/2, [d1.dx, 0.0],
                                      [d1.A0[1], d1.A0[0]])
-        A0_d2_mp = utils.extrapolate(d2.dx/2, [d2.dx, 0.0],
+        A0_d2_mp = utils.extrapolate(-d2.dx/2, [d2.dx, 0.0],
                                      [d2.A0[1], d2.A0[0]])
         R0_p_mp = np.sqrt(A0_p_mp/np.pi)
         R0_d1_mp = np.sqrt(A0_d1_mp/np.pi)
@@ -197,13 +204,13 @@ class ArteryNetwork(object):
         B_d2_mp = f_d2_mp * np.sqrt(x[17]*A0_d2_mp)
         k1 = parent.U0[1,-1] + theta * (parent.F(U_p_np, j=-1)[1]) +\
                 gamma * (parent.S(U_p_np, j=-1)[1])
-        k2 = d1.U0[1,0] + theta * (d1.F(U_d1_np, j=0)[1]) +\
+        k2 = d1.U0[1,0] - theta * (d1.F(U_d1_np, j=0)[1]) +\
                 gamma * (d1.S(U_d1_np, j=0)[1])
-        k3 = d2.U0[1,0] + theta * (d2.F(U_d2_np, j=0)[1]) +\
+        k3 = d2.U0[1,0] - theta * (d2.F(U_d2_np, j=0)[1]) +\
                 gamma * (d2.S(U_d2_np, j=0)[1])
-        k4 = parent.U0[0,-1] + theta*parent.F(U_p_np, j=-1)[0]
-        k5 = d1.U0[0,-1] + theta*d1.F(U_d1_np, j=0)[0]
-        k6 = d2.U0[0,-1] + theta*d2.F(U_d2_np, j=0)[0]
+        k4 = parent.U0[0,-1] - theta*parent.F(U_p_np, j=-1)[0]
+        k5 = d1.U0[0,0] - theta*d1.F(U_d1_np, j=0)[0]
+        k6 = d2.U0[0,0] - theta*d2.F(U_d2_np, j=0)[0]
         k7 = U_p_np[1]/2
         k8 = U_d1_np[1]/2
         k9 = U_d2_np[1]/2
@@ -216,14 +223,14 @@ class ArteryNetwork(object):
         k16b = d2.f[0] * np.sqrt(d2.A0[0])
         k156 = parent.f[-1] * np.sqrt(parent.A0[-1])
         fr1 = k1 - x[0] - theta*(x[2]**2/x[11] + B_p_mp) +\
-                gamma*(-2*np.pi*R0_p_mp*x[2]/(parent.delta*parent.Re*x[11])) +\
-                parent.dBdx(parent.L+parent.dx/2, x[11])
-        fr2 = k2 - x[3] - theta*(x[5]**2/x[14] + B_d1_mp) +\
-                gamma*(-2*np.pi*R0_d1_mp*x[5]/(d1.delta*d1.Re*x[14])) +\
-                d1.dBdx(-d1.dx/2, x[14])
-        fr3 = k3 - x[6] - theta*(x[8]**2/x[17] + B_d2_mp) +\
-                gamma*(-2*np.pi*R0_d2_mp*x[8]/(d2.delta*d2.Re*x[17])) +\
-                d2.dBdx(-d2.dx/2, x[17])
+                gamma*(-2*np.pi*R0_p_mp*x[2]/(parent.delta*parent.Re*x[11]) +\
+                parent.dBdx(parent.L+parent.dx/2, x[11]))
+        fr2 = k2 - x[3] + theta*(x[5]**2/x[14] + B_d1_mp) +\
+                gamma*(-2*np.pi*R0_d1_mp*x[5]/(d1.delta*d1.Re*x[14]) +\
+                d1.dBdx(-d1.dx/2, x[14]))
+        fr3 = k3 - x[6] + theta*(x[8]**2/x[17] + B_d2_mp) +\
+                gamma*(-2*np.pi*R0_d2_mp*x[8]/(d2.delta*d2.Re*x[17]) +\
+                d2.dBdx(-d2.dx/2, x[17]))
         fr4 = -x[9] - theta*x[2] + k4
         fr5 = -x[12] + theta*x[5] + k5
         fr6 = -x[15] + theta*x[8] + k6
@@ -237,8 +244,8 @@ class ArteryNetwork(object):
         fr14 = -x[0] + x[3] + x[6]
         fr15 = k156/np.sqrt(x[10]) - k15b/np.sqrt(x[13]) + k15a
         fr16 = k156/np.sqrt(x[10]) - k16b/np.sqrt(x[16]) + k16a
-        fr17 = k156/np.sqrt(x[10]) - k15b/np.sqrt(x[12]) + k15a
-        fr18 = k156/np.sqrt(x[10]) - k16b/np.sqrt(x[15]) + k16a
+        fr17 = k156/np.sqrt(x[9]) - k15b/np.sqrt(x[12]) + k15a
+        fr18 = k156/np.sqrt(x[9]) - k16b/np.sqrt(x[15]) + k16a
         return np.array([fr1, fr2, fr3, fr4, fr5, fr6, fr7, fr8, fr9, fr10,
                          fr11, fr12, fr13, fr14, fr15, fr16, fr17, fr18])
         
@@ -254,14 +261,13 @@ class ArteryNetwork(object):
                         d1.U0[0,0], d1.U0[0,0], d1.U0[0,0],
                         d2.U0[0,0], d2.U0[0,0], d2.U0[0,0]])
         k = 0
+        print "start"
         while k < 1000:
             Dfr = ArteryNetwork.jacobian(x0, parent, d1, d2, theta, gamma)
-            print x0            
-            print Dfr
             Dfr_inv = linalg.inv(Dfr)
             fr = ArteryNetwork.residuals(x0, parent, d1, d2, theta, gamma)
-            x1 = x0 - np.matmul(Dfr_inv, fr)
-            if sum(x1 - x0) < 1e-5:
+            x1 = x0 - np.dot(Dfr_inv, fr)
+            if (abs(x1 - x0) < 1e-3).all():
                 break
             k += 1
             np.copyto(x0, x1)
@@ -298,7 +304,7 @@ class ArteryNetwork(object):
                 
             for artery in self.arteries:
                 lw = LaxWendroff(artery.nx, artery.dx)
-
+                
                 if self.depth > 1 and artery.pos < 2**self.depth-1 - 2:
                     # need to sort out how the inlet is going to be applied
                     d1, d2 = self.get_daughters(artery)

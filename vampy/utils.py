@@ -14,7 +14,7 @@ def get_numbers_section(config, section):
     options = config.options(section)
     section_dict = {}    
     for option in options:
-        if option in ["nx", "tc", "ntr", "depth"]:
+        if option in ["tc", "ntr", "depth"]:
             section_dict[option] = config.getint(section, option)
         else:
             section_dict[option] = config.getfloat(section, option)
