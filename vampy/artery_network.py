@@ -150,6 +150,7 @@ class ArteryNetwork(object):
         Dfr[0,11] = theta * (x[2]**2/x[11]**2 - parent.dBdx(M12,x[11])) +\
                     gamma * (parent.dFdxi2(M12, x[2], x[11]) +\
                             parent.dBdxdxi(M12, x[11]))
+        print parent.dBdx(M12,x[11]), parent.dFdxi2(M12, x[2], x[11]), parent.dBdxdxi(M12, x[11])
         Dfr[1,5] = theta*2*x[5]/x[14] + gamma*d1.dFdxi1(D1_12, x[5], x[14])
         Dfr[1,14] = theta * (-x[5]**2/x[14]**2 + d1.dBdx(D1_12,x[14])) +\
                     gamma * (d1.dFdxi2(D1_12, x[5], x[14]) +\
@@ -260,14 +261,15 @@ class ArteryNetwork(object):
                         parent.U0[0,-1], parent.U0[0,-1], parent.U0[0,-1],
                         d1.U0[0,0], d1.U0[0,0], d1.U0[0,0],
                         d2.U0[0,0], d2.U0[0,0], d2.U0[0,0]])
+        print x0
         k = 0
-        print "start"
         while k < 1000:
+            print "k ", k
             Dfr = ArteryNetwork.jacobian(x0, parent, d1, d2, theta, gamma)
             Dfr_inv = linalg.inv(Dfr)
             fr = ArteryNetwork.residuals(x0, parent, d1, d2, theta, gamma)
             x1 = x0 - np.dot(Dfr_inv, fr)
-            if (abs(x1 - x0) < 1e-3).all():
+            if (abs(x1 - x0) < 1e-5).all():
                 break
             k += 1
             np.copyto(x0, x1)
@@ -298,6 +300,8 @@ class ArteryNetwork(object):
         while self.t < self.tf:
             save = False  
             
+            print "time ", self.t
+    
             if i < self.ntr and (abs(tr[i]-self.t) < self.dtr or self.t >= self.tf-self.dt):
                 save = True
                 i += 1
@@ -322,6 +326,7 @@ class ArteryNetwork(object):
                     U_in = ArteryNetwork.inlet_bc(artery, q_in, in_t, self.dt)
                 else:
                     U_in = bc_in[artery.pos]
+                    
                 if artery.pos >= (len(self.arteries) - 2**(self.depth-1)):
                     # outlet boundary condition
                     U_out = ArteryNetwork.outlet_bc(artery, self.dt, self.rc,

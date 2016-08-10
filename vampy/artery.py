@@ -113,19 +113,19 @@ before setting initial conditions.')
         if l == self.L+self.dx/2:
             x_0 = self.L-self.dx
             x_1 = self.L
-            f_0 = self.f[-2]
-            f_1 = self.f[-1]
-            A0_0 = self.A0[-2]
-            A0_1 = self.A0[-1]
-        else:
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])  
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
+        elif l == -self.dx/2:
             x_0 = self.dx
             x_1 = 0.0
-            f_0 = self.f[1]
-            f_1 = self.f[0]
-            A0_0 = self.A0[1]
-            A0_1 = self.A0[0]
-        f_l = utils.extrapolate(l, [x_0, x_1], [f_0, f_1])    
-        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1]) 
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])  
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]])  
+        elif l == self.L:
+            f_l = self.f[-1]
+            A0_l = self.A0[-1]
+        else:
+            f_l = self.f[0]
+            A0_l = self.A0[0]
         return f_l/2 * np.sqrt(A0_l/xi)
         
         
@@ -133,29 +133,29 @@ before setting initial conditions.')
         if l == self.L+self.dx/2:
             x_0 = self.L-self.dx
             x_1 = self.L
-            f_0 = self.f[-2]
-            f_1 = self.f[-1]
-            df_0 = self.df[-2]
-            df_1 = self.df[-1]
-            A0_0 = self.A0[-2]
-            A0_1 = self.A0[-1]
-            xgrad_0 = self.xgrad[-2]
-            xgrad_1 = self.xgrad[-1]
-        else:
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])   
+            df_l = utils.extrapolate(l, [x_0, x_1], [self.df[-2], self.df[-1]])   
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
+            xgrad_l = utils.extrapolate(l, [x_0, x_1],
+                                        [self.xgrad[-2], self.xgrad[-1]])  
+        elif l == -self.dx/2:
             x_0 = self.dx
             x_1 = 0.0
-            f_0 = self.f[1]
-            f_1 = self.f[0]
-            df_0 = self.df[1]
-            df_1 = self.df[0]
-            A0_0 = self.A0[1]
-            A0_1 = self.A0[0]
-            xgrad_0 = self.xgrad[1]
-            xgrad_1 = self.xgrad[0]
-        f_l = utils.extrapolate(l, [x_0, x_1], [f_0, f_1])   
-        df_l = utils.extrapolate(l, [x_0, x_1], [df_0, df_1])   
-        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1])   
-        xgrad_l = utils.extrapolate(l, [x_0, x_1], [xgrad_0, xgrad_1]) 
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])   
+            df_l = utils.extrapolate(l, [x_0, x_1], [self.df[1], self.df[0]])   
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]])  
+            xgrad_l = utils.extrapolate(l, [x_0, x_1],
+                                        [self.xgrad[1], self.xgrad[0]])  
+        elif l == self.L:
+            f_l = self.f[-1]   
+            df_l = self.df[-1]
+            A0_l = self.A0[-1]
+            xgrad_l = self.xgrad[-1]
+        else:
+            f_l = self.f[0]   
+            df_l = self.df[0]
+            A0_l = self.A0[0]
+            xgrad_l = self.xgrad[0]
         return (1/(2*np.sqrt(xi)) * (f_l*np.sqrt(np.pi) +\
                                     df_l*np.sqrt(A0_l)) - df_l) * xgrad_l
                                     
@@ -164,14 +164,17 @@ before setting initial conditions.')
         if l == self.L+self.dx/2:
             x_0 = self.L-self.dx
             x_1 = self.L
-            R0_0 = np.sqrt(self.A0[-2]/np.pi)
-            R0_1 = np.sqrt(self.A0[-1]/np.pi)
-        else:
+            R0_l = utils.extrapolate(l, [x_0, x_1], 
+                    [np.sqrt(self.A0[-2]/np.pi), np.sqrt(self.A0[-1]/np.pi)])
+        elif l == -self.dx/2:
             x_0 = self.dx
             x_1 = 0.0
-            R0_0 = np.sqrt(self.A0[1]/np.pi)
-            R0_1 = np.sqrt(self.A0[0]/np.pi)
-        R0_l = utils.extrapolate(l, [x_0, x_1], [R0_0, R0_1])
+            R0_l = utils.extrapolate(l, [x_0, x_1], 
+                    [np.sqrt(self.A0[1]/np.pi), np.sqrt(self.A0[0]/np.pi)])
+        elif l == self.L:
+            R0_l = np.sqrt(self.A0[-1]/np.pi)
+        else:
+            R0_l = np.sqrt(self.A0[0]/np.pi)
         return 2*np.pi*R0_l*xi1/(self.delta*self.Re*xi2**2)
         
         
@@ -179,14 +182,17 @@ before setting initial conditions.')
         if l == self.L+self.dx/2:
             x_0 = self.L-self.dx
             x_1 = self.L
-            R0_0 = np.sqrt(self.A0[-2]/np.pi)
-            R0_1 = np.sqrt(self.A0[-1]/np.pi)
-        else:
+            R0_l = utils.extrapolate(l, [x_0, x_1], 
+                    [np.sqrt(self.A0[-2]/np.pi), np.sqrt(self.A0[-1]/np.pi)])
+        elif l == -self.dx/2:
             x_0 = self.dx
             x_1 = 0.0
-            R0_0 = np.sqrt(self.A0[1]/np.pi)
-            R0_1 = np.sqrt(self.A0[0]/np.pi)
-        R0_l = utils.extrapolate(l, [x_0, x_1], [R0_0, R0_1])
+            R0_l = utils.extrapolate(l, [x_0, x_1], 
+                    [np.sqrt(self.A0[1]/np.pi), np.sqrt(self.A0[0]/np.pi)])
+        elif l == self.L:
+            R0_l = np.sqrt(self.A0[-1]/np.pi)
+        else:
+            R0_l = np.sqrt(self.A0[0]/np.pi)
         return 2*np.pi*R0_l/(self.delta*self.Re*xi2)
         
         
@@ -194,19 +200,19 @@ before setting initial conditions.')
         if l == self.L+self.dx/2:
             x_0 = self.L-self.dx
             x_1 = self.L
-            f_0 = self.f[-2]
-            f_1 = self.f[-1]
-            A0_0 = self.A0[-2]
-            A0_1 = self.A0[-1]
-        else:
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])   
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
+        elif l == -self.dx/2:
             x_0 = self.dx
             x_1 = 0.0
-            f_0 = self.f[1]
-            f_1 = self.f[0]
-            A0_0 = self.A0[1]
-            A0_1 = self.A0[0]
-        f_l = utils.extrapolate(l, [x_0, x_1], [f_0, f_1])   
-        A0_l = utils.extrapolate(l, [x_0, x_1], [A0_0, A0_1])  
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])   
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]])
+        elif l == self.L:
+            f_l = self.f[-1]   
+            A0_l = self.A0[-1]
+        else:
+            f_l = self.f[0]   
+            A0_l = self.A0[0]
         return -f_l/2 * np.sqrt(A0_l/xi**3)
         
 
