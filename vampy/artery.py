@@ -115,18 +115,29 @@ before setting initial conditions.')
             x_1 = self.L
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])  
             A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
+            df_l = utils.extrapolate(l, [x_0, x_1], [self.df[-2], self.df[-1]])
+            xgrad_l = utils.extrapolate(l, [x_0, x_1],
+                                        [self.xgrad[-2], self.xgrad[-1]])
         elif l == -self.dx/2:
             x_0 = self.dx
             x_1 = 0.0
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])  
-            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]])  
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]]) 
+            df_l = utils.extrapolate(l, [x_0, x_1], [self.df[1], self.df[0]])
+            xgrad_l = utils.extrapolate(l, [x_0, x_1],
+                                        [self.xgrad[1], self.xgrad[0]])
         elif l == self.L:
             f_l = self.f[-1]
             A0_l = self.A0[-1]
+            df_l = self.df[-1]
+            xgrad_l = self.xgrad[-1]
         else:
             f_l = self.f[0]
             A0_l = self.A0[0]
-        return f_l/2 * np.sqrt(A0_l/xi)
+            df_l = self.df[0]
+            xgrad_l = self.xgrad[0]
+        return (2*np.sqrt(xi) * (np.sqrt(np.pi)*f_l + np.sqrt(A0_l)*df_l) -\
+                    xi*df_l) * xgrad_l
         
         
     def dBdxdxi(self, l, xi):
@@ -175,7 +186,7 @@ before setting initial conditions.')
             R0_l = np.sqrt(self.A0[-1]/np.pi)
         else:
             R0_l = np.sqrt(self.A0[0]/np.pi)
-        return 2*np.pi*R0_l*xi1/(self.delta*self.Re*xi2**2)
+        return 2*np.pi*R0_l*xi1/(self.delta*self.Re*xi2*xi2)
         
         
     def dFdxi1(self, l, xi1, xi2):
@@ -193,7 +204,7 @@ before setting initial conditions.')
             R0_l = np.sqrt(self.A0[-1]/np.pi)
         else:
             R0_l = np.sqrt(self.A0[0]/np.pi)
-        return 2*np.pi*R0_l/(self.delta*self.Re*xi2)
+        return -2*np.pi*R0_l/(self.delta*self.Re*xi2)
         
         
     def dpdx(self, l, xi):

@@ -150,7 +150,7 @@ class ArteryNetwork(object):
         Dfr[0,11] = theta * (x[2]**2/x[11]**2 - parent.dBdx(M12,x[11])) +\
                     gamma * (parent.dFdxi2(M12, x[2], x[11]) +\
                             parent.dBdxdxi(M12, x[11]))
-        print parent.dBdx(M12,x[11]), parent.dFdxi2(M12, x[2], x[11]), parent.dBdxdxi(M12, x[11])
+        #print parent.dBdx(M12,x[11]), parent.dFdxi2(M12, x[2], x[11]), parent.dBdxdxi(M12, x[11])
         Dfr[1,5] = theta*2*x[5]/x[14] + gamma*d1.dFdxi1(D1_12, x[5], x[14])
         Dfr[1,14] = theta * (-x[5]**2/x[14]**2 + d1.dBdx(D1_12,x[14])) +\
                     gamma * (d1.dFdxi2(D1_12, x[5], x[14]) +\
@@ -209,7 +209,7 @@ class ArteryNetwork(object):
                 gamma * (d1.S(U_d1_np, j=0)[1])
         k3 = d2.U0[1,0] - theta * (d2.F(U_d2_np, j=0)[1]) +\
                 gamma * (d2.S(U_d2_np, j=0)[1])
-        k4 = parent.U0[0,-1] - theta*parent.F(U_p_np, j=-1)[0]
+        k4 = parent.U0[0,-1] + theta*parent.F(U_p_np, j=-1)[0]
         k5 = d1.U0[0,0] - theta*d1.F(U_d1_np, j=0)[0]
         k6 = d2.U0[0,0] - theta*d2.F(U_d2_np, j=0)[0]
         k7 = U_p_np[1]/2
@@ -266,6 +266,7 @@ class ArteryNetwork(object):
         while k < 1000:
             print "k ", k
             Dfr = ArteryNetwork.jacobian(x0, parent, d1, d2, theta, gamma)
+            print Dfr[0,11]
             Dfr_inv = linalg.inv(Dfr)
             fr = ArteryNetwork.residuals(x0, parent, d1, d2, theta, gamma)
             x1 = x0 - np.dot(Dfr_inv, fr)
