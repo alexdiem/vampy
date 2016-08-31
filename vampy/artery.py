@@ -29,7 +29,7 @@ class Artery(object):
         self._Re = nondim[2]
         self._delta = delta
         self._depth = kwargs['depth']
-        self._xgrad = R * np.log(R[-1]/R[0]) / self.L
+        #self._xgrad = R * np.log(R[-1]/R[0]) / self.L
         
         
     def initial_conditions(self, u0, ntr):
@@ -39,7 +39,7 @@ before setting initial conditions.')
         self.U = np.zeros((2, ntr, self.nx))
         self.P = np.zeros((ntr, self.nx))
         self.U0 = np.zeros((2, self.nx))
-        self.U0[0,:] = self.A0
+        self.U0[0,:] = self.A0.copy()
         self.U0[1,:].fill(u0)
         
         
@@ -47,8 +47,8 @@ before setting initial conditions.')
         self._nx = nx
         x = np.linspace(0.0, self.L, nx)
         self._dx = x[1] - x[0]
-        print self.dx
         R = np.sqrt(self.A0/np.pi)
+        self._xgrad = np.gradient(R, self.dx)
         
         
     def p(self, a):
@@ -101,17 +101,18 @@ before setting initial conditions.')
         R = np.sqrt(a0/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(a0)*df) - a*df) * xgrad/2
+                np.sqrt(a0)*df) - a*df) * xgrad
         return out
         
 
     def solve(self, lw, U_in, U_out, t, dt, save, i):
         # solve for current timestep
         U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt)
-        np.copyto(self.U0, U1)
         if save:
-            self.P[i,:] = self.p(U1[0,:])
-            np.copyto(self.U[:,i,:], U1)
+            self.P[i,:] = self.p(self.U0[0,:])
+            np.copyto(self.U[:,i,:], self.U0)
+        np.copyto(self.U0, U1)
+        
         
         
     def dump_results(self, suffix, data_dir):
