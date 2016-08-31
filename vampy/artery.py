@@ -6,6 +6,8 @@ import numpy as np
 import sys
 import matplotlib.pylab as plt
 
+import utils
+
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
@@ -16,20 +18,17 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, R, lam, rho, nu, delta, **kwargs):
+    def __init__(self, pos, Ru, Rd, lam, rho, nu, delta, **kwargs):
         self._pos = pos
-        self._A0 = np.pi*R*R
-        self._L = R[0]*lam
-        k = kwargs['k']
-        Ehr = k[0] * np.exp(k[1]*R) + k[2]
-        self._f = 4 * Ehr/3
-        self._df = 4 * k[0] * k[1] * np.exp(k[1]*R)/3     
+        self._Ru = Ru
+        self._Rd = Rd
+        self._L = Ru*lam
         self._nu = nu
+        self._k = kwargs['k']
         nondim = kwargs['nondim']
         self._Re = nondim[2]
         self._delta = delta
         self._depth = kwargs['depth']
-        #self._xgrad = R * np.log(R[-1]/R[0]) / self.L
         
         
     def initial_conditions(self, u0, ntr):
@@ -43,12 +42,18 @@ before setting initial conditions.')
         self.U0[1,:].fill(u0)
         
         
-    def mesh(self, nx):
-        self._nx = nx
-        x = np.linspace(0.0, self.L, nx)
-        self._dx = x[1] - x[0]
-        R = np.sqrt(self.A0/np.pi)
-        self._xgrad = np.gradient(R, self.dx)
+    def mesh(self, dx):
+        self._dx = dx
+        self._nx = int(self.L/dx)
+        if self.nx != self.L/dx:
+            self.L = dx * self.nx
+        K = np.log(self.Rd/self.Ru)/self.L
+        R = self.Ru * np.exp(K*np.linspace(0.0, self.L, self.nx))
+        self._A0 = R*R*np.pi
+        Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
+        self._f = 4 * Ehr/3
+        self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)     
+        self._xgrad = np.gradient(R, 2*self.dx)
         
         
     def p(self, a):
@@ -85,7 +90,6 @@ before setting initial conditions.')
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
-            r = np.sqrt(a/np.pi)
             xgrad = self.xgrad[j]
             f = self.f[j]
             df = self.df[j]
@@ -98,11 +102,129 @@ before setting initial conditions.')
             df = self.df[j:k]
         else:
             raise IndexError("Required to supply at least one index in function S.")
-        R = np.sqrt(a0/np.pi)
+        R = np.sqrt(a/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
                 np.sqrt(a0)*df) - a*df) * xgrad
         return out
+        
+        
+    def dBdx(self, l, xi):
+        if l == self.L+self.dx/2:
+            x_0 = self.L-self.dx
+            x_1 = self.L
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])  
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
+            df_l = utils.extrapolate(l, [x_0, x_1], [self.df[-2], self.df[-1]])
+            xgrad_l = utils.extrapolate(l, [x_0, x_1],
+                                        [self.xgrad[-2], self.xgrad[-1]])
+        elif l == -self.dx/2:
+            x_0 = self.dx
+            x_1 = 0.0
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])  
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]]) 
+            df_l = utils.extrapolate(l, [x_0, x_1], [self.df[1], self.df[0]])
+            xgrad_l = utils.extrapolate(l, [x_0, x_1],
+                                        [self.xgrad[1], self.xgrad[0]])
+        elif l == self.L:
+            f_l = self.f[-1]
+            A0_l = self.A0[-1]
+            df_l = self.df[-1]
+            xgrad_l = self.xgrad[-1]
+        else:
+            f_l = self.f[0]
+            A0_l = self.A0[0]
+            df_l = self.df[0]
+            xgrad_l = self.xgrad[0]
+        return (2*np.sqrt(xi) * (np.sqrt(np.pi)*f_l + np.sqrt(A0_l)*df_l) -\
+                    xi*df_l) * xgrad_l
+        
+        
+    def dBdxdxi(self, l, xi):
+        if l == self.L+self.dx/2:
+            x_0 = self.L-self.dx
+            x_1 = self.L
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])   
+            df_l = utils.extrapolate(l, [x_0, x_1], [self.df[-2], self.df[-1]])   
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
+            xgrad_l = utils.extrapolate(l, [x_0, x_1],
+                                        [self.xgrad[-2], self.xgrad[-1]])  
+        elif l == -self.dx/2:
+            x_0 = self.dx
+            x_1 = 0.0
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])   
+            df_l = utils.extrapolate(l, [x_0, x_1], [self.df[1], self.df[0]])   
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]])  
+            xgrad_l = utils.extrapolate(l, [x_0, x_1],
+                                        [self.xgrad[1], self.xgrad[0]])  
+        elif l == self.L:
+            f_l = self.f[-1]   
+            df_l = self.df[-1]
+            A0_l = self.A0[-1]
+            xgrad_l = self.xgrad[-1]
+        else:
+            f_l = self.f[0]   
+            df_l = self.df[0]
+            A0_l = self.A0[0]
+            xgrad_l = self.xgrad[0]
+        return (1/(2*np.sqrt(xi)) * (f_l*np.sqrt(np.pi) +\
+                                    df_l*np.sqrt(A0_l)) - df_l) * xgrad_l
+                                    
+                                    
+    def dFdxi2(self, l, xi1, xi2):
+        if l == self.L+self.dx/2:
+            x_0 = self.L-self.dx
+            x_1 = self.L
+            R0_l = utils.extrapolate(l, [x_0, x_1], 
+                    [np.sqrt(self.A0[-2]/np.pi), np.sqrt(self.A0[-1]/np.pi)])
+        elif l == -self.dx/2:
+            x_0 = self.dx
+            x_1 = 0.0
+            R0_l = utils.extrapolate(l, [x_0, x_1], 
+                    [np.sqrt(self.A0[1]/np.pi), np.sqrt(self.A0[0]/np.pi)])
+        elif l == self.L:
+            R0_l = np.sqrt(self.A0[-1]/np.pi)
+        else:
+            R0_l = np.sqrt(self.A0[0]/np.pi)
+        return 2*np.pi*R0_l*xi1/(self.delta*self.Re*xi2*xi2)
+        
+        
+    def dFdxi1(self, l, xi1, xi2):
+        if l == self.L+self.dx/2:
+            x_0 = self.L-self.dx
+            x_1 = self.L
+            R0_l = utils.extrapolate(l, [x_0, x_1], 
+                    [np.sqrt(self.A0[-2]/np.pi), np.sqrt(self.A0[-1]/np.pi)])
+        elif l == -self.dx/2:
+            x_0 = self.dx
+            x_1 = 0.0
+            R0_l = utils.extrapolate(l, [x_0, x_1], 
+                    [np.sqrt(self.A0[1]/np.pi), np.sqrt(self.A0[0]/np.pi)])
+        elif l == self.L:
+            R0_l = np.sqrt(self.A0[-1]/np.pi)
+        else:
+            R0_l = np.sqrt(self.A0[0]/np.pi)
+        return -2*np.pi*R0_l/(self.delta*self.Re*xi2)
+        
+        
+    def dpdx(self, l, xi):
+        if l == self.L+self.dx/2:
+            x_0 = self.L-self.dx
+            x_1 = self.L
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])   
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
+        elif l == -self.dx/2:
+            x_0 = self.dx
+            x_1 = 0.0
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])   
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]])
+        elif l == self.L:
+            f_l = self.f[-1]   
+            A0_l = self.A0[-1]
+        else:
+            f_l = self.f[0]   
+            A0_l = self.A0[0]
+        return -f_l/2 * np.sqrt(A0_l/xi**3)
         
 
     def solve(self, lw, U_in, U_out, t, dt, save, i):
@@ -210,8 +332,12 @@ before setting initial conditions.')
         return self._pos
     
     @property
-    def R(self):
-        return self._R
+    def Ru(self):
+        return self._Ru
+        
+    @property
+    def Rd(self):
+        return self._Rd
         
     @property
     def A0(self):
@@ -220,6 +346,14 @@ before setting initial conditions.')
     @property
     def L(self):
         return self._L
+        
+    @L.setter
+    def L(self, value): 
+        self._L = value
+        
+    @property
+    def k(self):
+        return self._k
         
     @property
     def f(self):
