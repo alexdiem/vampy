@@ -99,9 +99,9 @@ class ArteryNetwork(object):
     
     @staticmethod
     def outlet_bc(artery, dt, rc, qc, rho):
-        R1 = 13900*rc**4/(qc*rho) # olufsen 4100
-        R2 = 25300*rc**4/(qc*rho) # olufsen 1900
-        Ct = 1.3384e-6*rho*qc**2/rc**7 # 8.7137e-6
+        R1 = 4100*rc**4/(qc*rho) # olufsen 4100
+        R2 = 1900*rc**4/(qc*rho) # olufsen 1900
+        Ct = 8.7137e-6*rho*qc**2/rc**7 # 8.7137e-6
         a_n = artery.U0[0,-1]
         q_n = artery.U0[1,-1]
         p_out = p_o = artery.p(a_n)[-1] # initial guess for p_out

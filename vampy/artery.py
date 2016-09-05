@@ -54,7 +54,7 @@ before setting initial conditions.')
         Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
         self._f = 4 * Ehr/3
         self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)     
-        self._xgrad = np.gradient(R, 2*self.dx)
+        self._xgrad = np.gradient(R, self.dx)
         
         
     def p(self, a):
@@ -309,11 +309,12 @@ before setting initial conditions.')
             
     @staticmethod            
     def plot(suffix, plot_dir, x, y, labels, xlabel, ylabel, fname):
+        colours = ['#377eb8', '#4daf4a', '#984ea3', '#d95f02']
         plt.figure(figsize=(10,6))
         s = y.shape
         n = min(s)
         for i in range(n):
-            plt.plot(x, y[i,:], label="%d" % (labels[i]), lw=2)
+            plt.plot(x, y[i,:], label="%d" % (labels[i]), lw=2, color=colours[i])
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.legend()
