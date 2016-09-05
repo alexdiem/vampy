@@ -10,6 +10,7 @@ import utils
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
+from scipy.interpolate import interp1d
 
 
 class Artery(object):
@@ -102,10 +103,10 @@ before setting initial conditions.')
             df = self.df[j:k]
         else:
             raise IndexError("Required to supply at least one index in function S.")
-        R = np.sqrt(a/np.pi)
+        R = np.sqrt(a0/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(a0)*df) - a*df) * xgrad
+                np.sqrt(a0)*df) - a*df) * xgrad/2
         return out
         
         
@@ -140,6 +141,26 @@ before setting initial conditions.')
                     xi*df_l) * xgrad_l
         
         
+    def dBdxi(self, l, xi):
+        if l == self.L+self.dx/2:
+            x_0 = self.L-self.dx
+            x_1 = self.L
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])  
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
+        elif l == -self.dx/2:
+            x_0 = self.dx
+            x_1 = 0.0
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])  
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]]) 
+        elif l == self.L:
+            f_l = self.f[-1]
+            A0_l = self.A0[-1]
+        else:
+            f_l = self.f[0]
+            A0_l = self.A0[0]
+        return f_l/2 * np.sqrt(A0_l/xi)
+        
+        
     def dBdxdxi(self, l, xi):
         if l == self.L+self.dx/2:
             x_0 = self.L-self.dx
@@ -167,7 +188,7 @@ before setting initial conditions.')
             df_l = self.df[0]
             A0_l = self.A0[0]
             xgrad_l = self.xgrad[0]
-        return (1/(2*np.sqrt(xi)) * (f_l*np.sqrt(np.pi) +\
+        return (1/np.sqrt(xi) * (f_l*np.sqrt(np.pi) +\
                                     df_l*np.sqrt(A0_l)) - df_l) * xgrad_l
                                     
                                     
@@ -189,7 +210,7 @@ before setting initial conditions.')
         return 2*np.pi*R0_l*xi1/(self.delta*self.Re*xi2*xi2)
         
         
-    def dFdxi1(self, l, xi1, xi2):
+    def dFdxi1(self, l, xi2):
         if l == self.L+self.dx/2:
             x_0 = self.L-self.dx
             x_1 = self.L
@@ -224,7 +245,7 @@ before setting initial conditions.')
         else:
             f_l = self.f[0]   
             A0_l = self.A0[0]
-        return -f_l/2 * np.sqrt(A0_l/xi**3)
+        return f_l/2 * np.sqrt(A0_l/xi**3)
         
 
     def solve(self, lw, U_in, U_out, t, dt, save, i):
@@ -304,7 +325,8 @@ before setting initial conditions.')
         x = np.linspace(0, self.L, len(time))
         Y, X = np.meshgrid(time, x)
         dz = int(self.nx/len(time))
-        Z = self.P[:,0:self.nx+1:dz]
+        Z = self.P[:,0:self.nx:dz]
+        # need to solve issue of 3d plot
         surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
                        linewidth=0, antialiased=False)
         fig.colorbar(surf, shrink=0.5, aspect=5)

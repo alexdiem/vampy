@@ -99,9 +99,9 @@ class ArteryNetwork(object):
     
     @staticmethod
     def outlet_bc(artery, dt, rc, qc, rho):
-        R1 = 4100*rc**4/(qc*rho) # olufsen 4100
-        R2 = 1900*rc**4/(qc*rho) # olufsen 1900
-        Ct = 8.7137e-6*rho*qc**2/rc**7 # 8.7137e-6
+        R1 = 13900*rc**4/(qc*rho) # olufsen 4100
+        R2 = 25300*rc**4/(qc*rho) # olufsen 1900
+        Ct = 1.3384e-6*rho*qc**2/rc**7 # 8.7137e-6
         a_n = artery.U0[0,-1]
         q_n = artery.U0[1,-1]
         p_out = p_o = artery.p(a_n)[-1] # initial guess for p_out
@@ -146,17 +146,18 @@ class ArteryNetwork(object):
         Dfr[12,4] = Dfr[12,7] = Dfr[13,3] = Dfr[13,6] = 1.0
         Dfr[3,2] = -theta
         Dfr[4,5] = Dfr[5,8] = theta
-        Dfr[0,2] = -theta*2*x[2]/x[11] + gamma*parent.dFdxi1(M12, x[2], x[11])
-        Dfr[0,11] = theta * (x[2]**2/x[11]**2 - parent.dBdx(M12,x[11])) +\
+        Dfr[0,2] = -2*theta*x[2]/x[11] + gamma*parent.dFdxi1(M12, x[11])
+        Dfr[0,11] = theta * ((x[2]/x[11])**2 - parent.dBdxi(M12,x[11])) +\
                     gamma * (parent.dFdxi2(M12, x[2], x[11]) +\
                             parent.dBdxdxi(M12, x[11]))
-        #print parent.dBdx(M12,x[11]), parent.dFdxi2(M12, x[2], x[11]), parent.dBdxdxi(M12, x[11])
-        Dfr[1,5] = theta*2*x[5]/x[14] + gamma*d1.dFdxi1(D1_12, x[5], x[14])
-        Dfr[1,14] = theta * (-x[5]**2/x[14]**2 + d1.dBdx(D1_12,x[14])) +\
+                            
+                            
+        Dfr[1,5] = 2*theta*x[5]/x[14] + gamma*d1.dFdxi1(D1_12, x[14])
+        Dfr[1,14] = theta * (-(x[5]/x[14])**2 + d1.dBdxi(D1_12,x[14])) +\
                     gamma * (d1.dFdxi2(D1_12, x[5], x[14]) +\
                             d1.dBdxdxi(D1_12, x[14]))
-        Dfr[2,8] = theta*2*x[8]/x[17] + gamma*d2.dFdxi1(D2_12, x[8], x[17])
-        Dfr[2,17] = theta * (-x[8]**2/x[17]**2 + d2.dBdx(D2_12,x[17])) +\
+        Dfr[2,8] = 2*theta*x[8]/x[17] + gamma*d2.dFdxi1(D2_12, x[17])
+        Dfr[2,17] = theta * (-(x[8]/x[17])**2 + d2.dBdxi(D2_12,x[17])) +\
                     gamma * (d2.dFdxi2(D2_12, x[8], x[17]) +\
                             d2.dBdxdxi(D2_12, x[17]))
         Dfr[14,10] = zeta7
@@ -255,18 +256,25 @@ class ArteryNetwork(object):
     def bifurcation(parent, d1, d2, dt):
         theta = dt/parent.dx
         gamma = dt/2
-        x0 = np.array([parent.U0[1,-1], parent.U0[1,-1], parent.U0[1,-1],
-                        d1.U0[1,0], d1.U0[1,0], d1.U0[1,0],
-                        d2.U0[1,0], d2.U0[1,0], d2.U0[1,0],
-                        parent.U0[0,-1], parent.U0[0,-1], parent.U0[0,-1],
-                        d1.U0[0,0], d1.U0[0,0], d1.U0[0,0],
-                        d2.U0[0,0], d2.U0[0,0], d2.U0[0,0]])
-        print x0
+        qm_p = parent.U0[1,-1]
+        qm2_p = parent.U0[1,-2]
+        am_p = parent.U0[0,-1]
+        am2_p = parent.U0[0,-2]
+        q0_d1 = d1.U0[1,0]
+        q02_d1 = d1.U0[1,1]
+        a0_d1 = d1.U0[0,0]
+        a02_d1 = d1.U0[0,1]
+        q0_d2 = d2.U0[1,0]
+        q02_d2 = d2.U0[1,1]
+        a0_d2 = d2.U0[0,0]
+        a02_d2 = d2.U0[0,1]
+        x0 = np.array([qm_p, (qm_p+qm2_p)/2, qm_p, q0_d1, (q0_d1+q02_d1)/2,
+                        q0_d1, q0_d2, (q0_d2+q02_d2)/2, q0_d2, am_p,
+                        (am_p+am2_p)/2, am_p, a0_d1, (a0_d1+a02_d1)/2, a0_d1,
+                        a0_d2, (a0_d2+a02_d2)/2, a0_d2])
         k = 0
         while k < 1000:
-            print "k ", k
             Dfr = ArteryNetwork.jacobian(x0, parent, d1, d2, theta, gamma)
-            print Dfr[0,11]
             Dfr_inv = linalg.inv(Dfr)
             fr = ArteryNetwork.residuals(x0, parent, d1, d2, theta, gamma)
             x1 = x0 - np.dot(Dfr_inv, fr)
@@ -301,8 +309,6 @@ class ArteryNetwork(object):
         while self.t < self.tf:
             save = False  
             
-            print "time ", self.t
-    
             if i < self.ntr and (abs(tr[i]-self.t) < self.dtr or self.t >= self.tf-self.dt):
                 save = True
                 i += 1
