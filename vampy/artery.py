@@ -39,7 +39,7 @@ before setting initial conditions.')
         self.U = np.zeros((2, ntr, self.nx))
         self.P = np.zeros((ntr, self.nx))
         self.U0 = np.zeros((2, self.nx))
-        self.U0[0,:] = self.A0
+        self.U0[0,:] = self.A0.copy()
         self.U0[1,:].fill(u0)
         
         
@@ -251,10 +251,11 @@ before setting initial conditions.')
     def solve(self, lw, U_in, U_out, t, dt, save, i):
         # solve for current timestep
         U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt)
-        np.copyto(self.U0, U1)
         if save:
-            self.P[i,:] = self.p(U1[0,:])
-            np.copyto(self.U[:,i,:], U1)
+            self.P[i,:] = self.p(self.U0[0,:])
+            np.copyto(self.U[:,i,:], self.U0)
+        np.copyto(self.U0, U1)
+        
         
         
     def dump_results(self, suffix, data_dir):
