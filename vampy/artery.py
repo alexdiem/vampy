@@ -10,6 +10,7 @@ import utils
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
+from scipy.interpolate import interp1d
 
 
 class Artery(object):
@@ -52,7 +53,7 @@ before setting initial conditions.')
         Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
         self._f = 4 * Ehr/3
         self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)     
-        self._xgrad = np.gradient(R, 2*self.dx)
+        self._xgrad = np.gradient(R, self.dx)
         
         
     def p(self, a):
@@ -101,10 +102,10 @@ before setting initial conditions.')
             df = self.df[j:k]
         else:
             raise IndexError("Required to supply at least one index in function S.")
-        R = np.sqrt(a/np.pi)
+        R = np.sqrt(a0/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(a0)*df) - a*df) * xgrad
+                np.sqrt(a0)*df) - a*df) * xgrad/2
         return out
         
         
@@ -139,6 +140,26 @@ before setting initial conditions.')
                     xi*df_l) * xgrad_l
         
         
+    def dBdxi(self, l, xi):
+        if l == self.L+self.dx/2:
+            x_0 = self.L-self.dx
+            x_1 = self.L
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])  
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
+        elif l == -self.dx/2:
+            x_0 = self.dx
+            x_1 = 0.0
+            f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])  
+            A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]]) 
+        elif l == self.L:
+            f_l = self.f[-1]
+            A0_l = self.A0[-1]
+        else:
+            f_l = self.f[0]
+            A0_l = self.A0[0]
+        return f_l/2 * np.sqrt(A0_l/xi)
+        
+        
     def dBdxdxi(self, l, xi):
         if l == self.L+self.dx/2:
             x_0 = self.L-self.dx
@@ -166,7 +187,7 @@ before setting initial conditions.')
             df_l = self.df[0]
             A0_l = self.A0[0]
             xgrad_l = self.xgrad[0]
-        return (1/(2*np.sqrt(xi)) * (f_l*np.sqrt(np.pi) +\
+        return (1/np.sqrt(xi) * (f_l*np.sqrt(np.pi) +\
                                     df_l*np.sqrt(A0_l)) - df_l) * xgrad_l
                                     
                                     
@@ -188,7 +209,7 @@ before setting initial conditions.')
         return 2*np.pi*R0_l*xi1/(self.delta*self.Re*xi2*xi2)
         
         
-    def dFdxi1(self, l, xi1, xi2):
+    def dFdxi1(self, l, xi2):
         if l == self.L+self.dx/2:
             x_0 = self.L-self.dx
             x_1 = self.L
@@ -223,7 +244,7 @@ before setting initial conditions.')
         else:
             f_l = self.f[0]   
             A0_l = self.A0[0]
-        return -f_l/2 * np.sqrt(A0_l/xi**3)
+        return f_l/2 * np.sqrt(A0_l/xi**3)
         
 
     def solve(self, lw, U_in, U_out, t, dt, save, i):
@@ -287,11 +308,12 @@ before setting initial conditions.')
             
     @staticmethod            
     def plot(suffix, plot_dir, x, y, labels, xlabel, ylabel, fname):
+        colours = ['#377eb8', '#4daf4a', '#984ea3', '#d95f02']
         plt.figure(figsize=(10,6))
         s = y.shape
         n = min(s)
         for i in range(n):
-            plt.plot(x, y[i,:], label="%d" % (labels[i]), lw=2)
+            plt.plot(x, y[i,:], label="%d" % (labels[i]), lw=2, color=colours[i])
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         plt.legend()
@@ -304,7 +326,8 @@ before setting initial conditions.')
         x = np.linspace(0, self.L, len(time))
         Y, X = np.meshgrid(time, x)
         dz = int(self.nx/len(time))
-        Z = self.P[:,0:self.nx+1:dz]
+        Z = self.P[:,0:self.nx:dz]
+        # need to solve issue of 3d plot
         surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
                        linewidth=0, antialiased=False)
         fig.colorbar(surf, shrink=0.5, aspect=5)
