@@ -18,24 +18,24 @@ class ArteryNetwork(object):
     """
     
     
-    def __init__(self, Ru, Rd, a, b, lam, rho, nu, delta, depth, **kwargs):
+    def __init__(self, Ru, Rd, a, b, lam, k, rho, nu, delta, depth, nondim,
+                 ntr):
         self._depth = depth
         self._arteries = []
-        self.setup_arteries(Ru, Rd, a, b, lam, rho, nu, delta, **kwargs)
-        self._t = 0.0
-        self._ntr = kwargs['ntr']
-        self._progress = 10
-        nondim = kwargs['nondim']
         self._rc = nondim[0]
         self._qc = nondim[1]
-        self._rho = rho
         self._Re = nondim[2]
+        self.setup_arteries(Ru, Rd, a, b, lam, k, rho, nu, delta)
+        self._t = 0.0
+        self._ntr = ntr
+        self._progress = 10
+        self._rho = rho
         
         
-    def setup_arteries(self, Ru, Rd, a, b, lam, rho, nu, delta, **kwargs):
+    def setup_arteries(self, Ru, Rd, a, b, lam, k, rho, nu, delta):
         pos = 0
-        self.arteries.append(Artery(pos, Ru, Rd, lam, rho, nu, delta, depth=0,
-                                    **kwargs)) 
+        self.arteries.append(Artery(pos, Ru, Rd, lam, k, rho, nu, delta,
+                                    self.Re, 0)) 
         pos += 1
         radii_u = [Ru]
         radii_d = [Rd]
@@ -47,11 +47,11 @@ class ArteryNetwork(object):
                 rb_u = radii_u[i] * b
                 ra_d = radii_d[i] * a
                 rb_d = radii_d[i] * b
-                self.arteries.append(Artery(pos, ra_u, ra_d, lam, rho, nu, delta,
-                                            depth=i, **kwargs))
+                self.arteries.append(Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
+                                            delta, self.Re, i))
                 pos += 1
-                self.arteries.append(Artery(pos, rb_u, ra_d, lam, rho, nu, delta,
-                                            depth=i, **kwargs))
+                self.arteries.append(Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
+                                            delta, self.Re, i))
                 pos += 1
                 new_radii_u.append(ra_u)
                 new_radii_u.append(rb_u)
@@ -61,7 +61,7 @@ class ArteryNetwork(object):
             radii_d = new_radii_d
             
             
-    def initial_conditions(self, u0, ntr):
+    def initial_conditions(self, u0):
         for artery in self.arteries:
             artery.initial_conditions(u0, self.ntr)            
             
@@ -293,7 +293,7 @@ class ArteryNetwork(object):
         return self.arteries[p+1], self.arteries[p+2]
             
     
-    def solve(self, q_in, p_out, T):
+    def solve(self, q_in):
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
         i = 0
         self.timestep()

@@ -18,17 +18,16 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, Ru, Rd, lam, rho, nu, delta, **kwargs):
+    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, delta, Re, depth):
         self._pos = pos
         self._Ru = Ru
         self._Rd = Rd
         self._L = Ru*lam
         self._nu = nu
-        self._k = kwargs['k']
-        nondim = kwargs['nondim']
-        self._Re = nondim[2]
+        self._k = k
+        self._Re = Re
         self._delta = delta
-        self._depth = kwargs['depth']
+        self._depth = depth
         
         
     def initial_conditions(self, u0, ntr):
