@@ -343,6 +343,11 @@ before setting initial conditions.')
         Y, X = np.meshgrid(time, x)
         dz = int(self.nx/len(time))
         Z = self.U[1,:,0:self.nx+1:dz]
+
+        print X.shape, Z.shape
+        print dz
+        sys.exit()        
+        
         surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
                        linewidth=0, antialiased=False)
         fig.colorbar(surf, shrink=0.5, aspect=5)
