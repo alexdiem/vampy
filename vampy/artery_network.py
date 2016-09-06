@@ -25,17 +25,17 @@ class ArteryNetwork(object):
         self._rc = nondim[0]
         self._qc = nondim[1]
         self._Re = nondim[2]
-        self.setup_arteries(Ru, Rd, a, b, lam, k, rho, nu, delta)
+        self.setup_arteries(Ru, Rd, a, b, lam, k, rho, nu, delta, nondim)
         self._t = 0.0
         self._ntr = ntr
         self._progress = 10
         self._rho = rho
         
         
-    def setup_arteries(self, Ru, Rd, a, b, lam, k, rho, nu, delta):
+    def setup_arteries(self, Ru, Rd, a, b, lam, k, rho, nu, delta, nondim):
         pos = 0
         self.arteries.append(Artery(pos, Ru, Rd, lam, k, rho, nu, delta,
-                                    self.Re, 0)) 
+                                    self.Re, 0, nondim)) 
         pos += 1
         radii_u = [Ru]
         radii_d = [Rd]
@@ -48,10 +48,10 @@ class ArteryNetwork(object):
                 ra_d = radii_d[i] * a
                 rb_d = radii_d[i] * b
                 self.arteries.append(Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, i))
+                                            delta, self.Re, i, nondim))
                 pos += 1
                 self.arteries.append(Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, i))
+                                            delta, self.Re, i, nondim))
                 pos += 1
                 new_radii_u.append(ra_u)
                 new_radii_u.append(rb_u)
@@ -352,7 +352,6 @@ time step size." % (self.t))
             if self.t % (self.tf/10) < self.dt:
                 print "Progress {:}%".format(self._progress)
                 self._progress += 10
-                
         
         # redimensionalise
         for artery in self.arteries:
@@ -375,6 +374,11 @@ time step size." % (self.t))
         time = np.linspace(self.tf-self.T, self.tf, self.ntr)
         for artery in self.arteries:
             artery.time_plots(suffix, plot_dir, n, time)
+            
+            
+    def pq_plots(self, suffix, plot_dir):
+        for artery in self.arteries:
+            artery.pq_plot(suffix, plot_dir)
             
     
     def s3d_plots(self, suffix, plot_dir):

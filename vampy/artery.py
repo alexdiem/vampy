@@ -19,7 +19,7 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, delta, Re, depth):
+    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, delta, Re, depth, nondim):
         self._pos = pos
         self._Ru = Ru
         self._Rd = Rd
@@ -29,6 +29,7 @@ class Artery(object):
         self._Re = Re
         self._delta = delta
         self._depth = depth
+        self._nondim = nondim
         
         
     def initial_conditions(self, u0, ntr):
@@ -267,20 +268,19 @@ before setting initial conditions.')
                    
                    
     def spatial_plots(self, suffix, plot_dir, n):
-        # redimensionalise
-        nt = len(self.U[0,:,0])    
-        x = np.linspace(0, self.L, self.nx)
+        rc, qc, Re = self.nondim
+        L = self.L * rc
+        nt = len(self.U[0,:,0])   
+        x = np.linspace(0, L, self.nx)
         skip = int(nt/n)
         u = ['a', 'q', 'p']
-        l = ['m^2', 'm^3/s', 'mmHg']
+        l = ['cm^2', 'cm^3/s', 'mmHg']
         positions = range(0,nt-1,skip)
-        #positions = range(5)
         for i in range(2):
             y = self.U[i,positions,:]
             fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[i], self.pos)
             Artery.plot(suffix, plot_dir, x, y, positions, "m", l[i],
                         fname)
-                     
         y = self.P[positions,:] # convert to mmHg    
         fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[2], self.pos)
         Artery.plot(suffix, plot_dir, x, y, positions, "m", l[2],
@@ -288,22 +288,37 @@ before setting initial conditions.')
             
             
     def time_plots(self, suffix, plot_dir, n, time):
+        rc, qc, Re = self.nondim
+        time = time * rc**3 / qc
         nt = len(time)
         skip = int(self.nx/n)
         u = ['a', 'q', 'p']
-        l = ['m^2', 'm^3/s', 'mmHg']
+        l = ['cm^2', 'cm^3/s', 'mmHg']
         positions = range(0,self.nx-1,skip)
-        #positions = range(0,5)        
         for i in range(2):
             y = self.U[i,:,positions]
             fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[i], self.pos)
             Artery.plot(suffix, plot_dir, time, y, positions, "t", l[i],
                         fname)
-                        
         y = np.transpose(self.P[:,positions])   
         fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[2], self.pos)
         Artery.plot(suffix, plot_dir, time, y, positions, "t", l[2],
                         fname)
+                        
+                        
+    def pq_plot(self, suffix, plot_dir):
+        L = len(self.P[0,:])-1
+        positions = [0, int(L/4), int(L/2), int(3*L/4), L]
+        y = np.transpose(self.P[:,positions])
+        x = self.U[1,:,positions]
+        fname = "%s/%s_%s%d_pq.png" % (plot_dir, suffix, 'pq', self.pos)
+        plt.figure(figsize=(10,6))
+        labels = ['0', 'L/4', 'L/2', '3L/4', 'L']
+        for i in range(len(y[:,0])):
+            plt.plot(x[i,:], y[i,:], lw=1, color='k')
+        plt.xlabel('flux (cm^3/s)')
+        plt.ylabel('pressure (mmHg)')
+        plt.savefig(fname, dpi=600, bbox_inches='tight')
             
             
     @staticmethod            
@@ -316,39 +331,46 @@ before setting initial conditions.')
             plt.plot(x, y[i,:], label="%d" % (labels[i]), lw=2, color=colours[i])
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
+        plt.xlim([min(x), max(x)])
         plt.legend()
         plt.savefig(fname, dpi=600, bbox_inches='tight')
         
         
     def p3d_plot(self, suffix, plot_dir, time):
+        rc, qc, Re = self.nondim
+        L = self.L * rc
+        time = time * rc**3 / qc
         fig = plt.figure(figsize=(10,6))
         ax = fig.gca(projection='3d')
-        x = np.linspace(0, self.L, len(time))
+        x = np.linspace(0, L, len(time))
         Y, X = np.meshgrid(time, x)
         dz = int(self.nx/len(time))
         Z = self.P[:,0:self.nx:dz]
-        # need to solve issue of 3d plot
-        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
+        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.viridis,
                        linewidth=0, antialiased=False)
+        ax.set_xlabel('z (cm)')
+        ax.set_ylabel('t (s)')
+        ax.set_zlabel('pressure (mmHg)')
         fig.colorbar(surf, shrink=0.5, aspect=5)
         fname = "%s/%s_p3d%d.png" % (plot_dir, suffix, self.pos)
         fig.savefig(fname, dpi=600, bbox_inches='tight')
         
         
     def q3d_plot(self, suffix, plot_dir, time):
+        rc, qc, Re = self.nondim
+        L = self.L * rc
+        time = time * rc**3 / qc
         fig = plt.figure(figsize=(10,6))
         ax = fig.gca(projection='3d')
         x = np.linspace(0, self.L, len(time))
         Y, X = np.meshgrid(time, x)
         dz = int(self.nx/len(time))
         Z = self.U[1,:,0:self.nx+1:dz]
-
-        print X.shape, Z.shape
-        print dz
-        sys.exit()        
-        
-        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm,
+        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.viridis,
                        linewidth=0, antialiased=False)
+        ax.set_xlabel('z (cm)')
+        ax.set_ylabel('t (s)')
+        ax.set_zlabel('flux (cm^3/s)')
         fig.colorbar(surf, shrink=0.5, aspect=5)
         fname = "%s/%s_q3d%d.png" % (plot_dir, suffix, self.pos)
         fig.savefig(fname, dpi=600, bbox_inches='tight')
@@ -449,3 +471,7 @@ before setting initial conditions.')
     @property
     def depth(self):
         return self._depth
+        
+    @property
+    def nondim(self):
+        return self._nondim
