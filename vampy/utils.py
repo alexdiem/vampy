@@ -1,5 +1,6 @@
 import ConfigParser
 import matplotlib.pylab as plt
+import numpy as np
 
 
 def get_strings_section(config, section):
@@ -17,7 +18,12 @@ def get_numbers_section(config, section):
         if option in ["tc", "ntr", "depth"]:
             section_dict[option] = config.getint(section, option)
         else:
-            section_dict[option] = config.getfloat(section, option)
+            try:
+                section_dict[option] = config.getfloat(section, option)
+            except ValueError:
+                opt_list = config.get(section, option).split(',')
+                section_dict[option] = np.array([
+                                            float(opt) for opt in opt_list])
     return section_dict
     
 

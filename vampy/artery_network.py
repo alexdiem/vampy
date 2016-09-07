@@ -18,24 +18,34 @@ class ArteryNetwork(object):
     """
     
     
-    def __init__(self, Ru, Rd, a, b, lam, k, rho, nu, delta, depth, nondim,
-                 ntr):
+    def __init__(self, Ru, Rd, lam, k, rho, nu, delta, depth, nondim, ntr, 
+                 **kwargs):
         self._depth = depth
-        self._arteries = []
+        self._arteries = [0] * (2**depth - 1)
         self._rc = nondim[0]
         self._qc = nondim[1]
         self._Re = nondim[2]
-        self.setup_arteries(Ru, Rd, a, b, lam, k, rho, nu, delta, nondim)
+        if 'a' in kwargs:
+            self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k,
+                                   rho, nu, delta, nondim)
+        else:
+            self.setup_arteries(Ru, Rd, lam, k, rho, nu, delta, nondim)            
         self._t = 0.0
         self._ntr = ntr
         self._progress = 10
         self._rho = rho
         
         
-    def setup_arteries(self, Ru, Rd, a, b, lam, k, rho, nu, delta, nondim):
+    def setup_arteries(self, Ru, Rd, lam, k, rho, nu, delta, nondim):
+        for i in range(len(Ru)):
+            self.arteries[i] = (Artery(i, Ru[i], Rd[i], lam[i], k, rho, nu,
+                                    delta, self.Re, nondim)) 
+        
+        
+    def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, rho, nu, delta, nondim):
         pos = 0
-        self.arteries.append(Artery(pos, Ru, Rd, lam, k, rho, nu, delta,
-                                    self.Re, 0, nondim)) 
+        self.arteries[pos] = (Artery(pos, Ru, Rd, lam, k, rho, nu, delta,
+                                    self.Re, nondim)) 
         pos += 1
         radii_u = [Ru]
         radii_d = [Rd]
@@ -47,11 +57,11 @@ class ArteryNetwork(object):
                 rb_u = radii_u[i] * b
                 ra_d = radii_d[i] * a
                 rb_d = radii_d[i] * b
-                self.arteries.append(Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, i, nondim))
+                self.arteries[pos] = (Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
+                                            delta, self.Re, nondim))
                 pos += 1
-                self.arteries.append(Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, i, nondim))
+                self.arteries[pos] = (Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
+                                            delta, self.Re, nondim))
                 pos += 1
                 new_radii_u.append(ra_u)
                 new_radii_u.append(rb_u)

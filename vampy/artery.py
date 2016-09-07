@@ -19,7 +19,7 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, delta, Re, depth, nondim):
+    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, delta, Re, nondim):
         self._pos = pos
         self._Ru = Ru
         self._Rd = Rd
@@ -28,7 +28,6 @@ class Artery(object):
         self._k = k
         self._Re = Re
         self._delta = delta
-        self._depth = depth
         self._nondim = nondim
         
         
@@ -467,10 +466,6 @@ before setting initial conditions.')
     @property
     def xgrad(self):
         return self._xgrad
-        
-    @property
-    def depth(self):
-        return self._depth
         
     @property
     def nondim(self):
