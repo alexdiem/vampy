@@ -25,7 +25,10 @@ class ArteryNetwork(object):
         self._rc = nondim[0]
         self._qc = nondim[1]
         self._Re = nondim[2]
-        if 'a' in kwargs:
+        if depth == 1:
+            self.arteries[0] = Artery(0, Ru, Rd, lam, k, rho, nu, delta,
+                                    self.Re, nondim)
+        elif 'a' in kwargs:
             self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k,
                                    rho, nu, delta, nondim)
         else:
@@ -44,8 +47,8 @@ class ArteryNetwork(object):
         
     def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, rho, nu, delta, nondim):
         pos = 0
-        self.arteries[pos] = (Artery(pos, Ru, Rd, lam, k, rho, nu, delta,
-                                    self.Re, nondim)) 
+        self.arteries[pos] = Artery(pos, Ru, Rd, lam, k, rho, nu, delta,
+                                    self.Re, nondim)
         pos += 1
         radii_u = [Ru]
         radii_d = [Rd]
@@ -57,11 +60,11 @@ class ArteryNetwork(object):
                 rb_u = radii_u[i] * b
                 ra_d = radii_d[i] * a
                 rb_d = radii_d[i] * b
-                self.arteries[pos] = (Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, nondim))
+                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
+                                            delta, self.Re, nondim)
                 pos += 1
-                self.arteries[pos] = (Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, nondim))
+                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
+                                            delta, self.Re, nondim)
                 pos += 1
                 new_radii_u.append(ra_u)
                 new_radii_u.append(rb_u)

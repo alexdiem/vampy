@@ -50,6 +50,7 @@ before setting initial conditions.')
         K = np.log(self.Rd/self.Ru)/self.L
         R = self.Ru * np.exp(K*np.linspace(0.0, self.L, self.nx))
         self._A0 = R*R*np.pi
+        #Ehr = np.ones_like(R) * (self.k[0] * np.exp(self.k[1]*R[-1]) + self.k[2])
         Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
         self._f = 4 * Ehr/3
         self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)     
@@ -271,26 +272,25 @@ before setting initial conditions.')
         L = self.L * rc
         nt = len(self.U[0,:,0])   
         x = np.linspace(0, L, self.nx)
-        skip = int(nt/n)
+        skip = int(nt/n)+1
         u = ['a', 'q', 'p']
         l = ['cm^2', 'cm^3/s', 'mmHg']
         positions = range(0,nt-1,skip)
         for i in range(2):
             y = self.U[i,positions,:]
             fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[i], self.pos)
-            Artery.plot(suffix, plot_dir, x, y, positions, "m", l[i],
+            Artery.plot(suffix, plot_dir, x, y, positions, "cm", l[i],
                         fname)
         y = self.P[positions,:] # convert to mmHg    
         fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[2], self.pos)
-        Artery.plot(suffix, plot_dir, x, y, positions, "m", l[2],
+        Artery.plot(suffix, plot_dir, x, y, positions, "cm", l[2],
                         fname)
             
             
     def time_plots(self, suffix, plot_dir, n, time):
         rc, qc, Re = self.nondim
         time = time * rc**3 / qc
-        nt = len(time)
-        skip = int(self.nx/n)
+        skip = int(self.nx/n)+1
         u = ['a', 'q', 'p']
         l = ['cm^2', 'cm^3/s', 'mmHg']
         positions = range(0,self.nx-1,skip)
