@@ -50,7 +50,6 @@ before setting initial conditions.')
         K = np.log(self.Rd/self.Ru)/self.L
         R = self.Ru * np.exp(K*np.linspace(0.0, self.L, self.nx))
         self._A0 = R*R*np.pi
-        #Ehr = np.ones_like(R) * (self.k[0] * np.exp(self.k[1]*R[-1]) + self.k[2])
         Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
         self._f = 4 * Ehr/3
         self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)     
@@ -106,7 +105,7 @@ before setting initial conditions.')
         R = np.sqrt(a0/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(a0)*df) - a*df) * xgrad/2
+                np.sqrt(a0)*df) - a*df) * xgrad
         return out
         
         

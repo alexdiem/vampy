@@ -46,6 +46,8 @@ class ArteryNetwork(object):
         
         
     def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, rho, nu, delta, nondim):
+        if type(Ru) == float:
+            raise ValueError("Parameter depth has to be equal to 1 if only one artery is specified.")
         pos = 0
         self.arteries[pos] = Artery(pos, Ru, Rd, lam, k, rho, nu, delta,
                                     self.Re, nondim)
@@ -309,9 +311,22 @@ class ArteryNetwork(object):
     def get_daughters(self, parent):
         p = parent.pos
         return self.arteries[p+1], self.arteries[p+2]
+        
+        
+    def print_status(self):
+        if self.t % (self.tf/10) < self.dt:
+            print "Progress {:}%".format(self.progress)
+            self.progress += 10        
             
+            
+    def redimensionalise(self, p0):
+        for artery in self.arteries:
+            artery.P = p0 + artery.P*self.rho*self.qc**2*760 / (1.01325*10**6*self.rc**4)
+            artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
+            artery.U[1,:,:] = artery.U[1,:,:] * self.qc
+                    
     
-    def solve(self, q_in, out_args):
+    def solve(self, q_in, p0, out_args):
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
         i = 0
         self.timestep()
@@ -359,16 +374,9 @@ time step size." % (self.t))
                     sys.exit(1)  
                 
             self.timestep()
-            
-            if self.t % (self.tf/10) < self.dt:
-                print "Progress {:}%".format(self._progress)
-                self._progress += 10
+            self.print_status()
         
-        # redimensionalise
-        for artery in self.arteries:
-            artery.P = 85 + artery.P*self.rho*self.qc**2*760 / (1.01325*10**6*self.rc**4)
-            artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
-            artery.U[1,:,:] = artery.U[1,:,:] * self.qc
+        self.redimensionalise(p0)
                 
             
     def dump_results(self, suffix, data_dir):
@@ -463,3 +471,11 @@ time step size." % (self.t))
     @property
     def Re(self):
         return self._Re
+        
+    @property
+    def progress(self):
+        return self._progress
+        
+    @progress.setter
+    def progress(self, value): 
+        self._progress = value
