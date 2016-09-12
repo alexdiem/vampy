@@ -321,7 +321,7 @@ class ArteryNetwork(object):
             
     def redimensionalise(self, p0):
         for artery in self.arteries:
-            artery.P = p0 + artery.P*self.rho*self.qc**2*760 / (1.01325*10**6*self.rc**4)
+            artery.P = p0 + artery.P * (self.rho*self.qc**2 / self.rc**4) * 0.0007500617
             artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
             artery.U[1,:,:] = artery.U[1,:,:] * self.qc
                     
