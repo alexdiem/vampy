@@ -33,13 +33,13 @@ class Artery(object):
         
     def initial_conditions(self, u0, ntr):
         if not hasattr(self, '_nx'):
-            raise AttributeError('Artery not meshed. Execute mesh(self, nx) \
+            raise AttributeError('Artery not meshed. Execute mesh(self, dx) \
 before setting initial conditions.')
         self.U = np.zeros((2, ntr, self.nx))
         self.P = np.zeros((ntr, self.nx))
         self.U0 = np.zeros((2, self.nx))
         self.U0[0,:] = self.A0.copy()
-        self.U0[1,:].fill(u0)
+        self.U0[1,:].fill(0.0)
         
         
     def mesh(self, dx):
@@ -47,13 +47,14 @@ before setting initial conditions.')
         self._nx = int(self.L/dx)
         if self.nx != self.L/dx:
             self.L = dx * self.nx
-        K = np.log(self.Rd/self.Ru)/self.L
-        R = self.Ru * np.exp(K*np.linspace(0.0, self.L, self.nx))
+        X = np.linspace(0.0, self.L, self.nx)/self.L
+        R = self.Ru * np.power((self.Rd/self.Ru), X)
         self._A0 = R*R*np.pi
         Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
-        self._f = 4 * Ehr/3
-        self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)     
-        self._xgrad = np.gradient(R, self.dx)/2
+        self._f = 4/3 * Ehr
+        self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
+        self._xgrad = self.Ru/self.L * np.log(self.Rd/self.Ru) *\
+                        np.power((self.Rd/self.Ru), X)
         
         
     def p(self, a):
@@ -102,7 +103,7 @@ before setting initial conditions.')
             df = self.df[j:k]
         else:
             raise IndexError("Required to supply at least one index in function S.")
-        R = np.sqrt(a0/np.pi)
+        R = np.sqrt(a/np.pi)
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
                 np.sqrt(a0)*df) - a*df) * xgrad
@@ -187,7 +188,7 @@ before setting initial conditions.')
             df_l = self.df[0]
             A0_l = self.A0[0]
             xgrad_l = self.xgrad[0]
-        return (1/np.sqrt(xi) * (f_l*np.sqrt(np.pi) +\
+        return (1/(2*np.sqrt(xi)) * (f_l*np.sqrt(np.pi) +\
                                     df_l*np.sqrt(A0_l)) - df_l) * xgrad_l
                                     
                                     

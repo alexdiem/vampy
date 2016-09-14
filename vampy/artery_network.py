@@ -127,9 +127,9 @@ class ArteryNetwork(object):
                 artery.F(artery.U0[:,-3], j=-3))/artery.dx +\
                 (artery.S(artery.U0[:,-2], j=-2) +\
                 artery.S(artery.U0[:,-3], j=-3))/2)
-        U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mm, j=-1) -\
-                artery.F(U_np_mp, j=-1)) + dt/2 * (artery.S(U_np_mm, j=-1) +\
-                artery.S(U_np_mp, j=-1))
+        U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mm, j=-2) -\
+                artery.F(U_np_mp, j=-2)) + dt/2 * (artery.S(U_np_mm, j=-2) +\
+                artery.S(U_np_mp, j=-2))
         k = 0
         while k < 1000:
             p_old = p_o
@@ -285,12 +285,13 @@ class ArteryNetwork(object):
                         (am_p+am2_p)/2, am_p, a0_d1, (a0_d1+a02_d1)/2, a0_d1,
                         a0_d2, (a0_d2+a02_d2)/2, a0_d2])
         k = 0
+        x1 = np.ones_like(x0)
         while k < 1000:
             Dfr = ArteryNetwork.jacobian(x0, parent, d1, d2, theta, gamma)
             Dfr_inv = linalg.inv(Dfr)
             fr = ArteryNetwork.residuals(x0, parent, d1, d2, theta, gamma)
             x1 = x0 - np.dot(Dfr_inv, fr)
-            if (abs(x1 - x0) < 1e-5).all():
+            if (abs(x1 - x0) < 1e-7).all():
                 break
             k += 1
             np.copyto(x0, x1)
@@ -321,9 +322,14 @@ class ArteryNetwork(object):
             
     def redimensionalise(self, p0):
         for artery in self.arteries:
-            artery.P = p0 + artery.P * (self.rho*self.qc**2 / self.rc**4) * 0.0007500617
+            artery.P = (p0 + artery.P) * (self.rho*self.qc**2 / self.rc**4)
             artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
             artery.U[1,:,:] = artery.U[1,:,:] * self.qc
+            
+            
+    def p_to_mmHg(self):
+        for artery in self.arteries:
+            artery.P = artery.P * 0.007500617/10 # convert Pa to g/(cm*s^2)
                     
     
     def solve(self, q_in, p0, out_args):
@@ -377,6 +383,7 @@ time step size." % (self.t))
             self.print_status()
         
         self.redimensionalise(p0)
+        self.p_to_mmHg()
                 
             
     def dump_results(self, suffix, data_dir):
