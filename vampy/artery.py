@@ -19,7 +19,7 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, delta, Re, nondim):
+    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, delta, Re, p0, nondim):
         self._pos = pos
         self._Ru = Ru
         self._Rd = Rd
@@ -27,6 +27,7 @@ class Artery(object):
         self._nu = nu
         self._k = k
         self._Re = Re
+        self._p0 = p0
         self._delta = delta
         self._nondim = nondim
         
@@ -58,7 +59,7 @@ before setting initial conditions.')
         
         
     def p(self, a):
-        return self.f * (1 - np.sqrt(self.A0/a))
+        return self.p0 + self.f * (1 - np.sqrt(self.A0/a))
         
 
     def wave_speed(self, a):
@@ -470,3 +471,7 @@ before setting initial conditions.')
     @property
     def nondim(self):
         return self._nondim
+        
+    @property
+    def p0(self):
+        return self._p0
