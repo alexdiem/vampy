@@ -329,7 +329,7 @@ class ArteryNetwork(object):
             
     def p_to_mmHg(self):
         for artery in self.arteries:
-            artery.P = artery.P * 0.007500617/10 # convert Pa to g/(cm*s^2)
+            artery.P = artery.P * 0.0007500617 # convert Pa to g/(cm*s^2), to mmHg
                     
     
     def solve(self, q_in, p0, out_args):

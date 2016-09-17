@@ -104,9 +104,12 @@ before setting initial conditions.')
         else:
             raise IndexError("Required to supply at least one index in function S.")
         R = np.sqrt(a/np.pi)
+	factor = 2
+	if self.pos > 0:
+	    factor = 2.7
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(a0)*df) - a*df) * xgrad
+                np.sqrt(a0)*df) - a*df) * xgrad*factor
         return out
         
         
