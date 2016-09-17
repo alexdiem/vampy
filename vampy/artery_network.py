@@ -18,7 +18,7 @@ class ArteryNetwork(object):
     """
     
     
-    def __init__(self, Ru, Rd, lam, k, rho, nu, delta, depth, nondim, ntr, 
+    def __init__(self, Ru, Rd, lam, k, rho, nu, delta, p0, depth, nondim, ntr, 
                  **kwargs):
         self._depth = depth
         self._arteries = [0] * (2**depth - 1)
@@ -27,30 +27,30 @@ class ArteryNetwork(object):
         self._Re = nondim[2]
         if depth == 1:
             self.arteries[0] = Artery(0, Ru, Rd, lam, k, rho, nu, delta,
-                                    self.Re, nondim)
+                                    self.Re, p0, nondim)
         elif 'a' in kwargs:
             self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k,
-                                   rho, nu, delta, nondim)
+                                   rho, nu, delta, p0, nondim)
         else:
-            self.setup_arteries(Ru, Rd, lam, k, rho, nu, delta, nondim)            
+            self.setup_arteries(Ru, Rd, lam, k, rho, nu, delta, p0, nondim)            
         self._t = 0.0
         self._ntr = ntr
-        self._progress = 10
+        self._progress = 2
         self._rho = rho
         
         
-    def setup_arteries(self, Ru, Rd, lam, k, rho, nu, delta, nondim):
+    def setup_arteries(self, Ru, Rd, lam, k, rho, nu, delta, p0, nondim):
         for i in range(len(Ru)):
             self.arteries[i] = (Artery(i, Ru[i], Rd[i], lam[i], k, rho, nu,
-                                    delta, self.Re, nondim)) 
+                                    delta, self.Re, p0, nondim)) 
         
         
-    def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, rho, nu, delta, nondim):
+    def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, rho, nu, delta, p0, nondim):
         if type(Ru) == float:
             raise ValueError("Parameter depth has to be equal to 1 if only one artery is specified.")
         pos = 0
         self.arteries[pos] = Artery(pos, Ru, Rd, lam, k, rho, nu, delta,
-                                    self.Re, nondim)
+                                    self.Re, p0, nondim)
         pos += 1
         radii_u = [Ru]
         radii_d = [Rd]
@@ -63,10 +63,10 @@ class ArteryNetwork(object):
                 ra_d = radii_d[i] * a
                 rb_d = radii_d[i] * b
                 self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, nondim)
+                                            delta, self.Re, p0, nondim)
                 pos += 1
                 self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, nondim)
+                                            delta, self.Re, p0, nondim)
                 pos += 1
                 new_radii_u.append(ra_u)
                 new_radii_u.append(rb_u)
@@ -117,25 +117,25 @@ class ArteryNetwork(object):
         a_n = artery.U0[0,-1]
         q_n = artery.U0[1,-1]
         p_out = p_o = artery.p(a_n)[-1] # initial guess for p_out
-        U_np_mp = (artery.U0[:,-1] + artery.U0[:,-2])/2 +\
-                dt/2 * (-(artery.F(artery.U0[:,-1], j=-1) -\
-                artery.F(artery.U0[:,-2], j=-2))/artery.dx +\
-                (artery.S(artery.U0[:,-1], j=-1) +\
-                artery.S(artery.U0[:,-2], j=-2))/2)
-        U_np_mm = (artery.U0[:,-2] + artery.U0[:,-3])/2 +\
-                dt/2 * (-(artery.F(artery.U0[:,-2], j=-2) -\
-                artery.F(artery.U0[:,-3], j=-3))/artery.dx +\
-                (artery.S(artery.U0[:,-2], j=-2) +\
-                artery.S(artery.U0[:,-3], j=-3))/2)
-        U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mm, j=-2) -\
-                artery.F(U_np_mp, j=-2)) + dt/2 * (artery.S(U_np_mm, j=-2) +\
-                artery.S(U_np_mp, j=-2))
+        U_np_mp = (artery.U0[:,-1] + artery.U0[:,-2])/2 -\
+                dt*(artery.F(artery.U0[:,-1], j=-1) -\
+                artery.F(artery.U0[:,-2], j=-2))/(2*artery.dx) +\
+                dt*(artery.S(artery.U0[:,-1], j=-1) +\
+                artery.S(artery.U0[:,-2], j=-2))/4
+        U_np_mm = (artery.U0[:,-2] + artery.U0[:,-3])/2 -\
+                dt*(artery.F(artery.U0[:,-2], j=-2) -\
+                artery.F(artery.U0[:,-3], j=-3))/(2*artery.dx) +\
+                dt*(artery.S(artery.U0[:,-2], j=-2) +\
+                artery.S(artery.U0[:,-3], j=-3))/4
+        U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mp, j=-2) -\
+                artery.F(U_np_mm, j=-2)) + dt/2 * (artery.S(U_np_mp, j=-2) +\
+                artery.S(U_np_mm, j=-2))
         k = 0
+        X = dt/(R1*R2*Ct)
         while k < 1000:
             p_old = p_o
-            q_out = q_n + (p_o-p_out)/R1 + dt*(p_out/(R2*Ct) -\
-                    q_n*(R1+R2)/(R2*Ct))/R1
-            a_out = a_n - dt * (q_out - U_mm[1])/artery.dx
+            q_out = X*p_out - X*(R1+R2)*q_n + (p_o-p_out)/R1 + q_n
+            a_out = a_n - dt * (q_out - U_mm[1])/(artery.dx)
             p_o = artery.p(a_out)[-1]
             if abs(p_old - p_o) < 1e-7:
                 break
@@ -285,7 +285,6 @@ class ArteryNetwork(object):
                         (am_p+am2_p)/2, am_p, a0_d1, (a0_d1+a02_d1)/2, a0_d1,
                         a0_d2, (a0_d2+a02_d2)/2, a0_d2])
         k = 0
-        x1 = np.ones_like(x0)
         while k < 1000:
             Dfr = ArteryNetwork.jacobian(x0, parent, d1, d2, theta, gamma)
             Dfr_inv = linalg.inv(Dfr)
@@ -314,25 +313,49 @@ class ArteryNetwork(object):
         return self.arteries[p+1], self.arteries[p+2]
         
         
+    @staticmethod
+    def printProgress (iteration, total, prefix = '', suffix = '', decimals = 1, barLength = 100):
+        """
+        Call in a loop to create terminal progress bar
+        @params:
+            iteration   - Required  : current iteration (Int)
+            total       - Required  : total iterations (Int)
+            prefix      - Optional  : prefix string (Str)
+            suffix      - Optional  : suffix string (Str)
+            decimals    - Optional  : positive number of decimals in percent complete (Int)
+            barLength   - Optional  : character length of bar (Int)
+        """
+        formatStr       = "{0:." + str(decimals) + "f}"
+        percents        = formatStr.format(100 * (iteration / float(total)))
+        filledLength    = int(round(barLength * iteration / float(total)))
+        bar             = '█' * filledLength + '-' * (barLength - filledLength)
+        sys.stdout.write('\r%s |%s| %s%s %s' % (prefix, bar, percents, '%', suffix)),
+        if iteration == total:
+            sys.stdout.write('\n')
+        sys.stdout.flush()
+        
+        
     def print_status(self):
-        if self.t % (self.tf/10) < self.dt:
-            print "Progress {:}%".format(self.progress)
-            self.progress += 10        
+        it = 2
+        if self.t % (self.tf/(100/it)) < self.dt:
+            ArteryNetwork.printProgress(self.progress, 100,
+                    prefix = 'Progress:', suffix = 'Complete', barLength = 50)
+            self.progress += it        
             
             
-    def redimensionalise(self, p0):
+    def redimensionalise(self):
         for artery in self.arteries:
-            artery.P = (p0 + artery.P) * (self.rho*self.qc**2 / self.rc**4)
+            artery.P = artery.P * (self.rho*self.qc**2 / self.rc**4)
             artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
             artery.U[1,:,:] = artery.U[1,:,:] * self.qc
             
             
     def p_to_mmHg(self):
         for artery in self.arteries:
-            artery.P = artery.P * 0.0007500617 # convert Pa to g/(cm*s^2), to mmHg
-                    
-    
-    def solve(self, q_in, p0, out_args):
+            artery.P = artery.P / 1333.22365 # convert g/(cm*s^2) to mmHg
+            
+            
+    def solve(self, q_in, out_args):
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
         i = 0
         self.timestep()
@@ -382,7 +405,7 @@ time step size." % (self.t))
             self.timestep()
             self.print_status()
         
-        self.redimensionalise(p0)
+        self.redimensionalise()
         self.p_to_mmHg()
                 
             
