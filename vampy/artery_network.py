@@ -114,28 +114,29 @@ class ArteryNetwork(object):
     
     @staticmethod
     def outlet_bc(artery, dt, rc, qc, rho, R1, R2, Ct):
+        dx = artery.dx
         a_n = artery.U0[0,-1]
         q_n = artery.U0[1,-1]
         p_out = p_o = artery.p(a_n)[-1] # initial guess for p_out
         U_np_mp = (artery.U0[:,-1] + artery.U0[:,-2])/2 -\
                 dt*(artery.F(artery.U0[:,-1], j=-1) -\
-                artery.F(artery.U0[:,-2], j=-2))/(2*artery.dx) +\
+                artery.F(artery.U0[:,-2], j=-2))/(2*dx) +\
                 dt*(artery.S(artery.U0[:,-1], j=-1) +\
                 artery.S(artery.U0[:,-2], j=-2))/4
         U_np_mm = (artery.U0[:,-2] + artery.U0[:,-3])/2 -\
                 dt*(artery.F(artery.U0[:,-2], j=-2) -\
-                artery.F(artery.U0[:,-3], j=-3))/(2*artery.dx) +\
+                artery.F(artery.U0[:,-3], j=-3))/(2*dx) +\
                 dt*(artery.S(artery.U0[:,-2], j=-2) +\
                 artery.S(artery.U0[:,-3], j=-3))/4
-        U_mm = artery.U0[:,-2] - dt/artery.dx * (artery.F(U_np_mp, j=-2) -\
-                artery.F(U_np_mm, j=-2)) + dt/2 * (artery.S(U_np_mp, j=-2) +\
-                artery.S(U_np_mm, j=-2))
+        U_mm = artery.U0[:,-2] - dt*(artery.F(U_np_mp, j=-2) -\
+                artery.F(U_np_mm, j=-2))/dx + dt*(artery.S(U_np_mp, j=-2) +\
+                artery.S(U_np_mm, j=-2))/2
         k = 0
         X = dt/(R1*R2*Ct)
         while k < 1000:
             p_old = p_o
             q_out = X*p_out - X*(R1+R2)*q_n + (p_o-p_out)/R1 + q_n
-            a_out = a_n - dt * (q_out - U_mm[1])/(artery.dx)
+            a_out = a_n - dt * (q_out - U_mm[1])/dx
             p_o = artery.p(a_out)[-1]
             if abs(p_old - p_o) < 1e-7:
                 break
@@ -185,19 +186,17 @@ class ArteryNetwork(object):
 
     @staticmethod
     def residuals(x, parent, d1, d2, theta, gamma):
-        U_p_np = (parent.U0[:,-1] + parent.U0[:,-2])/2 +\
-                gamma * (-(parent.F(parent.U0[:,-1], j=-1) -\
-                parent.F(parent.U0[:,-2], j=-2))/parent.dx +\
-                (parent.S(parent.U0[:,-1], j=-1) +\
-                parent.S(parent.U0[:,-2], j=-2))/2)
-        U_d1_np = (d1.U0[:,1] + d1.U0[:,0])/2 +\
-                gamma * (-(d1.F(d1.U0[:,1], j=1) -\
-                d1.F(d1.U0[:,0], j=0))/d1.dx + (d1.S(d1.U0[:,1], j=1) +\
-                d1.S(d1.U0[:,0], j=0))/2)
-        U_d2_np = (d2.U0[:,1] + d2.U0[:,0])/2 +\
-                gamma * (-(d2.F(d2.U0[:,1], j=1) -\
-                d2.F(d2.U0[:,0], j=0))/d2.dx + (d2.S(d2.U0[:,1], j=1) +\
-                d2.S(d2.U0[:,0], j=0))/2)
+        U_p_np = (parent.U0[:,-1] + parent.U0[:,-2])/2 -\
+                theta*(parent.F(parent.U0[:,-1], j=-1) -\
+                parent.F(parent.U0[:,-2], j=-2))/2 +\
+                gamma*(parent.S(parent.U0[:,-1], j=-1) +\
+                parent.S(parent.U0[:,-2], j=-2))/2
+        U_d1_np = (d1.U0[:,1] + d1.U0[:,0])/2 -theta*(d1.F(d1.U0[:,1], j=1) -\
+                d1.F(d1.U0[:,0], j=0))/2 + gamma*(d1.S(parent.U0[:,1], j=1) +\
+                d1.S(d1.U0[:,0], j=0))/2
+        U_d2_np = (d2.U0[:,1] + d2.U0[:,0])/2 -theta*(d2.F(d2.U0[:,1], j=1) -\
+                d1.F(d2.U0[:,0], j=0))/2 + gamma*(d2.S(parent.U0[:,1], j=1) +\
+                d1.S(d2.U0[:,0], j=0))/2
         f_p_mp = utils.extrapolate(parent.L+parent.dx/2,
                 [parent.L-parent.dx, parent.L], [parent.f[-2], parent.f[-1]])
         f_d1_mp = utils.extrapolate(-d1.dx/2, [d1.dx, 0.0],
@@ -263,15 +262,15 @@ class ArteryNetwork(object):
         return np.array([fr1, fr2, fr3, fr4, fr5, fr6, fr7, fr8, fr9, fr10,
                          fr11, fr12, fr13, fr14, fr15, fr16, fr17, fr18])
         
-    
+
     @staticmethod
     def bifurcation(parent, d1, d2, dt):
         theta = dt/parent.dx
         gamma = dt/2
-        qm_p = parent.U0[1,-1]
-        qm2_p = parent.U0[1,-2]
-        am_p = parent.U0[0,-1]
-        am2_p = parent.U0[0,-2]
+        qm_p = parent.U0[1,-2]
+        qm2_p = parent.U0[1,-1]
+        am_p = parent.U0[0,-2]
+        am2_p = parent.U0[0,-1]
         q0_d1 = d1.U0[1,0]
         q02_d1 = d1.U0[1,1]
         a0_d1 = d1.U0[0,0]
@@ -290,7 +289,7 @@ class ArteryNetwork(object):
             Dfr_inv = linalg.inv(Dfr)
             fr = ArteryNetwork.residuals(x0, parent, d1, d2, theta, gamma)
             x1 = x0 - np.dot(Dfr_inv, fr)
-            if (abs(x1 - x0) < 1e-7).all():
+            if (abs(x1 - x0) < 1e-12).all():
                 break
             k += 1
             np.copyto(x0, x1)

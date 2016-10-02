@@ -45,21 +45,20 @@ before setting initial conditions.')
         
     def mesh(self, dx):
         self._dx = dx
-        self._nx = int(self.L/dx)
-        if self.nx != self.L/dx:
-            self.L = dx * self.nx
+        self._nx = int(self.L/dx)+1
+        if (self.nx-1) != self.L/dx:
+            self.L = dx * (self.nx-1)
         X = np.linspace(0.0, self.L, self.nx)/self.L
         R = self.Ru * np.power((self.Rd/self.Ru), X)
         self._A0 = R*R*np.pi
         Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
         self._f = 4/3 * Ehr
         self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
-        self._xgrad = self.Ru/self.L * np.log(self.Rd/self.Ru) *\
-                        np.power((self.Rd/self.Ru), X)
+        self._xgrad = np.gradient(R, dx)
         
         
     def p(self, a):
-        return self.p0 + self.f * (1 - np.sqrt(self.A0/a))
+        return self.f * (1 - np.sqrt(self.A0/a))
         
 
     def wave_speed(self, a):
@@ -113,7 +112,7 @@ before setting initial conditions.')
         
         
     def dBdx(self, l, xi):
-        if l == self.L+self.dx/2:
+        if l > self.L:
             x_0 = self.L-self.dx
             x_1 = self.L
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])  
@@ -121,7 +120,7 @@ before setting initial conditions.')
             df_l = utils.extrapolate(l, [x_0, x_1], [self.df[-2], self.df[-1]])
             xgrad_l = utils.extrapolate(l, [x_0, x_1],
                                         [self.xgrad[-2], self.xgrad[-1]])
-        elif l == -self.dx/2:
+        elif l < 0.0:
             x_0 = self.dx
             x_1 = 0.0
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])  
@@ -144,12 +143,12 @@ before setting initial conditions.')
         
         
     def dBdxi(self, l, xi):
-        if l == self.L+self.dx/2:
+        if l > self.L:
             x_0 = self.L-self.dx
             x_1 = self.L
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])  
             A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
-        elif l == -self.dx/2:
+        elif l < 0.0:
             x_0 = self.dx
             x_1 = 0.0
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])  
@@ -164,7 +163,7 @@ before setting initial conditions.')
         
         
     def dBdxdxi(self, l, xi):
-        if l == self.L+self.dx/2:
+        if l > self.L:
             x_0 = self.L-self.dx
             x_1 = self.L
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])   
@@ -172,7 +171,7 @@ before setting initial conditions.')
             A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
             xgrad_l = utils.extrapolate(l, [x_0, x_1],
                                         [self.xgrad[-2], self.xgrad[-1]])  
-        elif l == -self.dx/2:
+        elif l < 0.0:
             x_0 = self.dx
             x_1 = 0.0
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])   
@@ -195,12 +194,12 @@ before setting initial conditions.')
                                     
                                     
     def dFdxi2(self, l, xi1, xi2):
-        if l == self.L+self.dx/2:
+        if l > self.L:
             x_0 = self.L-self.dx
             x_1 = self.L
             R0_l = utils.extrapolate(l, [x_0, x_1], 
                     [np.sqrt(self.A0[-2]/np.pi), np.sqrt(self.A0[-1]/np.pi)])
-        elif l == -self.dx/2:
+        elif l < 0.0:
             x_0 = self.dx
             x_1 = 0.0
             R0_l = utils.extrapolate(l, [x_0, x_1], 
@@ -213,12 +212,12 @@ before setting initial conditions.')
         
         
     def dFdxi1(self, l, xi2):
-        if l == self.L+self.dx/2:
+        if l > self.L:
             x_0 = self.L-self.dx
             x_1 = self.L
             R0_l = utils.extrapolate(l, [x_0, x_1], 
                     [np.sqrt(self.A0[-2]/np.pi), np.sqrt(self.A0[-1]/np.pi)])
-        elif l == -self.dx/2:
+        elif l < 0.0:
             x_0 = self.dx
             x_1 = 0.0
             R0_l = utils.extrapolate(l, [x_0, x_1], 
@@ -231,12 +230,12 @@ before setting initial conditions.')
         
         
     def dpdx(self, l, xi):
-        if l == self.L+self.dx/2:
+        if l > self.L:
             x_0 = self.L-self.dx
             x_1 = self.L
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[-2], self.f[-1]])   
             A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
-        elif l == -self.dx/2:
+        elif l < 0.0:
             x_0 = self.dx
             x_1 = 0.0
             f_l = utils.extrapolate(l, [x_0, x_1], [self.f[1], self.f[0]])   
@@ -324,8 +323,16 @@ before setting initial conditions.')
             
     @staticmethod            
     def plot(suffix, plot_dir, x, y, labels, xlabel, ylabel, fname):
+        WIDTH = 510  # the number latex spits out  \n",
+        FACTOR = 1.0  # the fraction of the width you'd like the figure to occupy
+        fig_width_pt  = WIDTH * FACTOR
+        inches_per_pt = 1.0 / 72.27
+        golden_ratio  = (np.sqrt(5) - 1.0) / 2.0  # because it looks good
+        fig_width_in  = fig_width_pt * inches_per_pt  # figure width in inches
+        fig_height_in = fig_width_in * golden_ratio/3   # figure height in inches
+        fig_dims    = [fig_width_in, fig_height_in] # fig dims as a list
         colours = ['#377eb8', '#4daf4a', '#984ea3', '#d95f02']
-        plt.figure(figsize=(10,6))
+        plt.figure(figsize=(10,5))
         s = y.shape
         n = min(s)
         for i in range(n):
@@ -341,7 +348,15 @@ before setting initial conditions.')
         rc, qc, Re = self.nondim
         L = self.L * rc
         time = time * rc**3 / qc
-        fig = plt.figure(figsize=(10,6))
+        WIDTH = 510  # the number latex spits out  \n",
+        FACTOR = 0.4  # the fraction of the width you'd like the figure to occupy
+        fig_width_pt  = WIDTH * FACTOR
+        inches_per_pt = 1.0 / 72.27
+        golden_ratio  = (np.sqrt(5) - 1.0) / 2.0  # because it looks good
+        fig_width_in  = fig_width_pt * inches_per_pt  # figure width in inches
+        fig_height_in = fig_width_in * golden_ratio   # figure height in inches
+        fig_dims    = [fig_width_in, fig_height_in] # fig dims as a list
+        fig = plt.figure(figsize=fig_dims)
         ax = fig.gca(projection='3d')
         x = np.linspace(0, L, len(time))
         Y, X = np.meshgrid(time, x)
@@ -361,7 +376,15 @@ before setting initial conditions.')
         rc, qc, Re = self.nondim
         L = self.L * rc
         time = time * rc**3 / qc
-        fig = plt.figure(figsize=(10,6))
+        WIDTH = 510  # the number latex spits out  \n",
+        FACTOR = 0.4  # the fraction of the width you'd like the figure to occupy
+        fig_width_pt  = WIDTH * FACTOR
+        inches_per_pt = 1.0 / 72.27
+        golden_ratio  = (np.sqrt(5) - 1.0) / 2.0  # because it looks good
+        fig_width_in  = fig_width_pt * inches_per_pt  # figure width in inches
+        fig_height_in = fig_width_in * golden_ratio   # figure height in inches
+        fig_dims    = [fig_width_in, fig_height_in] # fig dims as a list
+        fig = plt.figure(figsize=fig_dims)
         ax = fig.gca(projection='3d')
         x = np.linspace(0, self.L, len(time))
         Y, X = np.meshgrid(time, x)
