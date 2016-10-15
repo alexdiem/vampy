@@ -51,9 +51,11 @@ before setting initial conditions.')
         X = np.linspace(0.0, self.L, self.nx)/self.L
         R = self.Ru * np.power((self.Rd/self.Ru), X)
         self._A0 = R*R*np.pi
-        Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
+        #Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
+        Ehr = np.full_like(R, self.k[0] * np.exp(self.k[1]*R[0]) + self.k[2])
         self._f = 4/3 * Ehr
-        self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
+        #self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
+        self._df = np.full_like(R, 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R[0]))
         self._xgrad = np.gradient(R, dx)
         
         
