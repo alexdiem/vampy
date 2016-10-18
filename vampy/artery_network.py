@@ -18,7 +18,7 @@ class ArteryNetwork(object):
     """
     
     
-    def __init__(self, Ru, Rd, lam, k, rho, nu, delta, p0, depth, nondim, ntr, 
+    def __init__(self, Ru, Rd, lam, k, rho, nu, p0, depth, nondim, ntr, 
                  **kwargs):
         self._depth = depth
         self._arteries = [0] * (2**depth - 1)
@@ -26,26 +26,26 @@ class ArteryNetwork(object):
         self._qc = nondim[1]
         self._Re = nondim[2]
         if depth == 1:
-            self.arteries[0] = Artery(0, Ru, Rd, lam, k, rho, nu, delta,
-                                    self.Re, p0, nondim)
+            self.arteries[0] = Artery(0, Ru, Rd, lam, k, rho, nu, self.Re, p0,
+                                        nondim)
         elif 'a' in kwargs:
             self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k,
-                                   rho, nu, delta, p0, nondim)
+                                   rho, nu, p0, nondim)
         else:
-            self.setup_arteries(Ru, Rd, lam, k, rho, nu, delta, p0, nondim)            
+            self.setup_arteries(Ru, Rd, lam, k, rho, nu, p0, nondim)            
         self._t = 0.0
         self._ntr = ntr
         self._progress = 2
         self._rho = rho
         
         
-    def setup_arteries(self, Ru, Rd, lam, k, rho, nu, delta, p0, nondim):
+    def setup_arteries(self, Ru, Rd, lam, k, rho, nu, p0, nondim):
         for i in range(len(Ru)):
             self.arteries[i] = Artery(i, Ru[i], Rd[i], lam[i], k, rho, nu,
                                     delta, self.Re, p0, nondim)
         
         
-    def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, rho, nu, delta, p0, nondim):
+    def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, rho, nu, p0, nondim):
         if type(Ru) == float:
             raise ValueError("Parameter depth has to be equal to 1 if only one artery is specified.")
         pos = 0
@@ -63,10 +63,10 @@ class ArteryNetwork(object):
                 ra_d = radii_d[i] * a
                 rb_d = radii_d[i] * b
                 self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, p0, nondim)
+                                            self.Re, p0, nondim)
                 pos += 1
                 self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            delta, self.Re, p0, nondim)
+                                            self.Re, p0, nondim)
                 pos += 1
                 new_radii_u.append(ra_u)
                 new_radii_u.append(rb_u)
@@ -81,17 +81,32 @@ class ArteryNetwork(object):
             artery.initial_conditions(u0, self.ntr)            
             
             
-    def mesh(self, nx):
+    def mesh(self, dx):
+        """
+        Invokes mesh(nx) on each artery in the network
+        
+        :param dx: Spatial step size
+        """
         for artery in self.arteries:
-            artery.mesh(nx)
+            artery.mesh(dx)
             
     
-    def set_time(self, tf, dt, T=0.0, tc=1):
+    def set_time(self, dt, T, tc=1):
+        """
+        Sets timing parameters for the artery network and invokes
+        boundary_layer_thickness(T) in each artery.
+        
+        :param dt: Time step size.
+        :param T: Length of one periodic cycle.
+        :param tc: Number of cycles.
+        """
         self._dt = dt
-        self._tf = tf
-        self._dtr = tf/self.ntr
+        self._tf = T*tc
+        self._dtr = self.tf/self.ntr
         self._T = T
         self._tc = tc
+        for artery in self.arteries:
+            artery.boundary_layer_thickness(T)
             
             
     def timestep(self):
@@ -113,31 +128,35 @@ class ArteryNetwork(object):
      
     
     @staticmethod
-    def outlet_bc(artery, dt, rc, qc, rho, R1, R2, Ct):
+    def outlet_bc(artery, dt, R1, R2, Ct):
+        """
+        Function calculating the three-element Windkessel outlet boundary
+        condition.
+        
+        :param artery: Artery object of outlet artery
+        :param dt: time step size
+        :param R1: first resistance element
+        :param R2: second resistance element
+        :param Ct: compliance element
+        :returns: Numpy array containing the outlet area and flux
+        """
         dx = artery.dx
         a_n = artery.U0[0,-1]
         q_n = artery.U0[1,-1]
-        p_out = p_o = artery.p(a_n)[-1] # initial guess for p_out
-        U_np_mp = (artery.U0[:,-1] + artery.U0[:,-2])/2 -\
-                dt*(artery.F(artery.U0[:,-1], j=-1) -\
-                artery.F(artery.U0[:,-2], j=-2))/(2*dx) +\
-                dt*(artery.S(artery.U0[:,-1], j=-1) +\
-                artery.S(artery.U0[:,-2], j=-2))/4
-        U_np_mm = (artery.U0[:,-2] + artery.U0[:,-3])/2 -\
-                dt*(artery.F(artery.U0[:,-2], j=-2) -\
-                artery.F(artery.U0[:,-3], j=-3))/(2*dx) +\
-                dt*(artery.S(artery.U0[:,-2], j=-2) +\
-                artery.S(artery.U0[:,-3], j=-3))/4
-        U_mm = artery.U0[:,-2] - dt*(artery.F(U_np_mp, j=-2) -\
-                artery.F(U_np_mm, j=-2))/dx + dt*(artery.S(U_np_mp, j=-2) +\
-                artery.S(U_np_mm, j=-2))/2
+        p_out = p_o = artery.p(a_n, j=-1) # initial guess for p_out
+        U0_1 = artery.U0[:,-1]
+        U0_2 = artery.U0[:,-2]
+        U0_3 = artery.U0[:,-3]
+        U_np_mp = (U0_1 + U0_2)/2 - dt*(artery.F(U0_1, j=-1) - artery.F(U0_2, j=-2))/(2*dx) + dt*(artery.S(U0_1, j=-1) + artery.S(U0_2, j=-2))/4
+        U_np_mm = (U0_2 + U0_3)/2 - dt*(artery.F(U0_2, j=-2) - artery.F(U0_3, j=-3))/(2*dx) + dt*(artery.S(U0_2, j=-2) + artery.S(U0_3, j=-3))/4
+        U_mm = U0_2 - dt*(artery.F(U_np_mp, j=-2) - artery.F(U_np_mm, j=-2))/dx + dt*(artery.S(U_np_mp, j=-2) + artery.S(U_np_mm, j=-2))/2
         k = 0
         X = dt/(R1*R2*Ct)
         while k < 1000:
             p_old = p_o
             q_out = X*p_out - X*(R1+R2)*q_n + (p_o-p_out)/R1 + q_n
             a_out = a_n - dt * (q_out - U_mm[1])/dx
-            p_o = artery.p(a_out)[-1]
+            p_o = artery.p(a_out, j=-1)
             if abs(p_old - p_o) < 1e-7:
                 break
             k += 1
@@ -368,7 +387,8 @@ class ArteryNetwork(object):
         for artery in self.arteries:
             artery.P = artery.P / 1333.22365 # convert g/(cm*s^2) to mmHg
             
-            
+    
+    @profile        
     def solve(self, q_in, out_args):
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
         i = 0
@@ -404,8 +424,7 @@ class ArteryNetwork(object):
                     
                 if artery.pos >= (len(self.arteries) - 2**(self.depth-1)):
                     # outlet boundary condition
-                    U_out = ArteryNetwork.outlet_bc(artery, self.dt, self.rc,
-                                                self.qc, self.rho, *out_args)
+                    U_out = ArteryNetwork.outlet_bc(artery, self.dt, *out_args)
                 
                 artery.solve(lw, U_in, U_out, self.t, self.dt, save, i-1)
                 

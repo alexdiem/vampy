@@ -19,7 +19,7 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, delta, Re, p0, nondim):
+    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, Re, p0, nondim):
         self._pos = pos
         self._Ru = Ru
         self._Rd = Rd
@@ -28,7 +28,6 @@ class Artery(object):
         self._k = k
         self._Re = Re
         self._p0 = p0
-        self._delta = delta
         self._nondim = nondim
         
         
@@ -44,23 +43,45 @@ before setting initial conditions.')
         
         
     def mesh(self, dx):
+        """
+        Meshes an artery using spatial step size dx.
+        
+        :param dx: Spatial step size
+        """
         self._dx = dx
         self._nx = int(self.L/dx)+1
-        if (self.nx-1) != self.L/dx:
+        if self.nx-1 != self.L/dx:
             self.L = dx * (self.nx-1)
-        X = np.linspace(0.0, self.L, self.nx)/self.L
-        R = self.Ru * np.power((self.Rd/self.Ru), X)
+        X = np.linspace(0.0, self.L, self.nx)#/self.L
+        #R = self.Ru * np.power((self.Rd/self.Ru), X)
+        R = np.linspace(self.Rd, self.Ru, self.nx)
         self._A0 = R*R*np.pi
-        #Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
-        Ehr = np.full_like(R, self.k[0] * np.exp(self.k[1]*R[0]) + self.k[2])
+        Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
+        #Ehr = np.full_like(R, self.k[0] * np.exp(self.k[1]*R[0]) + self.k[2])
         self._f = 4/3 * Ehr
-        #self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
-        self._df = np.full_like(R, 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R[0]))
+        self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
+        #self._df = np.full_like(R, 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R[0]))
         self._xgrad = np.gradient(R, dx)
         
         
-    def p(self, a):
-        return self.f * (1 - np.sqrt(self.A0/a))
+    def boundary_layer_thickness(self, T):
+        """
+        Calculates the boundary layer thickness of the artery according to
+        
+        delta = sqrt(nu*T/2*pi).
+        
+        :param T: Length of one periodic cycle.
+        """
+        self._delta = np.sqrt(self.nu*T/(2*np.pi))
+        
+        
+    def p(self, a, **kwargs):
+        if 'j' in kwargs:
+            j = kwargs['j']
+            p = self.f[j] * (1 - np.sqrt(self.A0[j]/a))
+        else:
+            p = self.f * (1 - np.sqrt(self.A0/a))
+        return p
         
 
     def wave_speed(self, a):
@@ -106,10 +127,9 @@ before setting initial conditions.')
         else:
             raise IndexError("Required to supply at least one index in function S.")
         R = np.sqrt(a/np.pi)
-        factor = 1.0
         out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
-                np.sqrt(a0)*df) - a*df) * xgrad*factor
+                np.sqrt(a0)*df) - a*df) * xgrad
         return out
         
         
@@ -250,7 +270,8 @@ before setting initial conditions.')
             A0_l = self.A0[0]
         return f_l/2 * np.sqrt(A0_l/xi**3)
         
-
+        
+    @profile
     def solve(self, lw, U_in, U_out, t, dt, save, i):
         # solve for current timestep
         U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt)
