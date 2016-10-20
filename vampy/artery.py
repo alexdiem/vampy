@@ -19,16 +19,23 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, Ru, Rd, lam, k, rho, nu, Re, p0, nondim):
+    def __init__(self, pos, Ru, Rd, lam, k, Re):
+        """
+        Artery constructor.
+        
+        :param pos: artery ID
+        :param Ru: upstream radius
+        :param Rd: downstream radius
+        :param lam: length-to-radius (upstream) ratio 
+        :param k: iterable containing elasticity parameters k1, k2, k3
+        :param Re: Reynold's number
+        """
         self._pos = pos
         self._Ru = Ru
         self._Rd = Rd
         self._L = Ru*lam
-        self._nu = nu
         self._k = k
         self._Re = Re
-        self._p0 = p0
-        self._nondim = nondim
         
         
     def initial_conditions(self, u0, ntr):
@@ -64,7 +71,7 @@ before setting initial conditions.')
         self._xgrad = np.gradient(R, dx)
         
         
-    def boundary_layer_thickness(self, T):
+    def boundary_layer_thickness(self, nu, T):
         """
         Calculates the boundary layer thickness of the artery according to
         
@@ -72,7 +79,7 @@ before setting initial conditions.')
         
         :param T: Length of one periodic cycle.
         """
-        self._delta = np.sqrt(self.nu*T/(2*np.pi))
+        self._delta = np.sqrt(nu*T/(2*np.pi))
         
         
     def p(self, a, **kwargs):
@@ -271,7 +278,6 @@ before setting initial conditions.')
         return f_l/2 * np.sqrt(A0_l/xi**3)
         
         
-    @profile
     def solve(self, lw, U_in, U_out, t, dt, save, i):
         # solve for current timestep
         U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt)
@@ -283,146 +289,14 @@ before setting initial conditions.')
         
         
     def dump_results(self, suffix, data_dir):
-        np.savetxt("%s/u%d_%s.csv" % (data_dir, self.pos, suffix),
+        np.savetxt("%s/%s/u%d_%s.csv" % (data_dir, suffix, self.pos, suffix),
                    self.U[1,:,:], delimiter=',')
-        np.savetxt("%s/a%d_%s.csv" % (data_dir, self.pos, suffix),
+        np.savetxt("%s/%s/a%d_%s.csv" % (data_dir, suffix, self.pos, suffix),
                    self.U[0,:,:], delimiter=',')  
-        np.savetxt("%s/p%d_%s.csv" % (data_dir, self.pos, suffix),
+        np.savetxt("%s/%s/p%d_%s.csv" % (data_dir, suffix, self.pos, suffix),
                    self.P, delimiter=',') 
                    
-                   
-    def spatial_plots(self, suffix, plot_dir, n):
-        rc, qc, Re = self.nondim
-        L = self.L * rc
-        nt = len(self.U[0,:,0])   
-        x = np.linspace(0, L, self.nx)
-        skip = int(nt/n)+1
-        u = ['a', 'q', 'p']
-        l = ['cm^2', 'cm^3/s', 'mmHg']
-        positions = range(0,nt-1,skip)
-        for i in range(2):
-            y = self.U[i,positions,:]
-            fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[i], self.pos)
-            Artery.plot(suffix, plot_dir, x, y, positions, "cm", l[i],
-                        fname)
-        y = self.P[positions,:] # convert to mmHg    
-        fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[2], self.pos)
-        Artery.plot(suffix, plot_dir, x, y, positions, "cm", l[2],
-                        fname)
-            
-            
-    def time_plots(self, suffix, plot_dir, n, time):
-        rc, qc, Re = self.nondim
-        time = time * rc**3 / qc
-        skip = int(self.nx/n)+1
-        u = ['a', 'q', 'p']
-        l = ['cm^2', 'cm^3/s', 'mmHg']
-        positions = range(0,self.nx-1,skip)
-        for i in range(2):
-            y = self.U[i,:,positions]
-            fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[i], self.pos)
-            Artery.plot(suffix, plot_dir, time, y, positions, "t", l[i],
-                        fname)
-        y = np.transpose(self.P[:,positions])   
-        fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[2], self.pos)
-        Artery.plot(suffix, plot_dir, time, y, positions, "t", l[2],
-                        fname)
-                        
-                        
-    def pq_plot(self, suffix, plot_dir):
-        L = len(self.P[0,:])-1
-        positions = [0, int(L/4), int(L/2), int(3*L/4), L]
-        y = np.transpose(self.P[:,positions])
-        x = self.U[1,:,positions]
-        fname = "%s/%s_%s%d_pq.png" % (plot_dir, suffix, 'pq', self.pos)
-        plt.figure(figsize=(10,6))
-        labels = ['0', 'L/4', 'L/2', '3L/4', 'L']
-        for i in range(len(y[:,0])):
-            plt.plot(x[i,:], y[i,:], lw=1, color='k')
-        plt.xlabel('flux (cm^3/s)')
-        plt.ylabel('pressure (mmHg)')
-        plt.savefig(fname, dpi=600, bbox_inches='tight')
-            
-            
-    @staticmethod            
-    def plot(suffix, plot_dir, x, y, labels, xlabel, ylabel, fname):
-        WIDTH = 510  # the number latex spits out  \n",
-        FACTOR = 1.0  # the fraction of the width you'd like the figure to occupy
-        fig_width_pt  = WIDTH * FACTOR
-        inches_per_pt = 1.0 / 72.27
-        golden_ratio  = (np.sqrt(5) - 1.0) / 2.0  # because it looks good
-        fig_width_in  = fig_width_pt * inches_per_pt  # figure width in inches
-        fig_height_in = fig_width_in * golden_ratio/3   # figure height in inches
-        fig_dims    = [fig_width_in, fig_height_in] # fig dims as a list
-        colours = ['#377eb8', '#4daf4a', '#984ea3', '#d95f02']
-        plt.figure(figsize=(10,5))
-        s = y.shape
-        n = min(s)
-        for i in range(n):
-            plt.plot(x, y[i,:], label="%d" % (labels[i]), lw=2, color=colours[i])
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.xlim([min(x), max(x)])
-        plt.legend()
-        plt.savefig(fname, dpi=600, bbox_inches='tight')
-        
-        
-    def p3d_plot(self, suffix, plot_dir, time):
-        rc, qc, Re = self.nondim
-        L = self.L * rc
-        time = time * rc**3 / qc
-        WIDTH = 510  # the number latex spits out  \n",
-        FACTOR = 0.4  # the fraction of the width you'd like the figure to occupy
-        fig_width_pt  = WIDTH * FACTOR
-        inches_per_pt = 1.0 / 72.27
-        golden_ratio  = (np.sqrt(5) - 1.0) / 2.0  # because it looks good
-        fig_width_in  = fig_width_pt * inches_per_pt  # figure width in inches
-        fig_height_in = fig_width_in * golden_ratio   # figure height in inches
-        fig_dims    = [fig_width_in, fig_height_in] # fig dims as a list
-        fig = plt.figure(figsize=fig_dims)
-        ax = fig.gca(projection='3d')
-        x = np.linspace(0, L, len(time))
-        Y, X = np.meshgrid(time, x)
-        dz = int(self.nx/len(time))
-        Z = self.P[:,0:self.nx:dz]
-        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.viridis,
-                       linewidth=0, antialiased=False)
-        ax.set_xlabel('z (cm)')
-        ax.set_ylabel('t (s)')
-        ax.set_zlabel('pressure (mmHg)')
-        fig.colorbar(surf, shrink=0.5, aspect=5)
-        fname = "%s/%s_p3d%d.png" % (plot_dir, suffix, self.pos)
-        fig.savefig(fname, dpi=600, bbox_inches='tight')
-        
-        
-    def q3d_plot(self, suffix, plot_dir, time):
-        rc, qc, Re = self.nondim
-        L = self.L * rc
-        time = time * rc**3 / qc
-        WIDTH = 510  # the number latex spits out  \n",
-        FACTOR = 0.4  # the fraction of the width you'd like the figure to occupy
-        fig_width_pt  = WIDTH * FACTOR
-        inches_per_pt = 1.0 / 72.27
-        golden_ratio  = (np.sqrt(5) - 1.0) / 2.0  # because it looks good
-        fig_width_in  = fig_width_pt * inches_per_pt  # figure width in inches
-        fig_height_in = fig_width_in * golden_ratio   # figure height in inches
-        fig_dims    = [fig_width_in, fig_height_in] # fig dims as a list
-        fig = plt.figure(figsize=fig_dims)
-        ax = fig.gca(projection='3d')
-        x = np.linspace(0, self.L, len(time))
-        Y, X = np.meshgrid(time, x)
-        dz = int(self.nx/len(time))
-        Z = self.U[1,:,0:self.nx+1:dz]
-        surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.viridis,
-                       linewidth=0, antialiased=False)
-        ax.set_xlabel('z (cm)')
-        ax.set_ylabel('t (s)')
-        ax.set_zlabel('flux (cm^3/s)')
-        fig.colorbar(surf, shrink=0.5, aspect=5)
-        fname = "%s/%s_q3d%d.png" % (plot_dir, suffix, self.pos)
-        fig.savefig(fname, dpi=600, bbox_inches='tight')
-        
-    
+
     @property
     def pos(self):
         return self._pos
@@ -452,24 +326,16 @@ before setting initial conditions.')
         return self._k
         
     @property
+    def Re(self):
+        return self._Re
+        
+    @property
     def f(self):
         return self._f
 
     @property
     def df(self):
         return self._df
-        
-    @property
-    def rho(self):
-        return self._rho
-        
-    @property
-    def nu(self):
-        return self._nu
-        
-    @property
-    def init_cond(self):
-        return self._init_cond
         
     @property
     def dx(self):
@@ -504,21 +370,9 @@ before setting initial conditions.')
         self._P = value
         
     @property
-    def Re(self):
-        return self._Re
-        
-    @property
     def delta(self):
         return self._delta
-        
+
     @property
     def xgrad(self):
         return self._xgrad
-        
-    @property
-    def nondim(self):
-        return self._nondim
-        
-    @property
-    def p0(self):
-        return self._p0

@@ -91,11 +91,11 @@ def main():
     data_dir = "data"
     plot_dir = "plots"
     pos = 0
-    suffix = "single_artery"
-    T = 1.0
-    tc = 1
+    suffix = "bifurcation"
+    T = 0.917
+    tc = 4
     tf = T*tc
-    L = 0.14*250    
+    L = 0.37*56.22  
     
     P = np.loadtxt("%s/%s/p%d_%s.csv" % (data_dir, suffix, pos, suffix), delimiter=',')
     

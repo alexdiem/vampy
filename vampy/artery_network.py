@@ -26,31 +26,29 @@ class ArteryNetwork(object):
         self._qc = nondim[1]
         self._Re = nondim[2]
         if depth == 1:
-            self.arteries[0] = Artery(0, Ru, Rd, lam, k, rho, nu, self.Re, p0,
-                                        nondim)
+            self.arteries[0] = Artery(0, Ru, Rd, lam, k, Re)
         elif 'a' in kwargs:
-            self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k,
-                                   rho, nu, p0, nondim)
+            self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k)
         else:
-            self.setup_arteries(Ru, Rd, lam, k, rho, nu, p0, nondim)            
+            self.setup_arteries(Ru, Rd, lam, k)            
         self._t = 0.0
         self._ntr = ntr
         self._progress = 2
         self._rho = rho
+        self._nu = nu
+        self._p0 = p0
         
         
-    def setup_arteries(self, Ru, Rd, lam, k, rho, nu, p0, nondim):
+    def setup_arteries(self, Ru, Rd, lam, k):
         for i in range(len(Ru)):
-            self.arteries[i] = Artery(i, Ru[i], Rd[i], lam[i], k, rho, nu,
-                                    delta, self.Re, p0, nondim)
+            self.arteries[i] = Artery(i, Ru[i], Rd[i], lam[i], k, self.Re)
         
         
-    def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, rho, nu, p0, nondim):
+    def setup_arteries_ab(self, Ru, Rd, a, b, lam, k):
         if type(Ru) == float:
             raise ValueError("Parameter depth has to be equal to 1 if only one artery is specified.")
         pos = 0
-        self.arteries[pos] = Artery(pos, Ru, Rd, lam, k, rho, nu, delta,
-                                    self.Re, p0, nondim)
+        self.arteries[pos] = Artery(pos, Ru, Rd, lam, k. self.Re)
         pos += 1
         radii_u = [Ru]
         radii_d = [Rd]
@@ -62,11 +60,9 @@ class ArteryNetwork(object):
                 rb_u = radii_u[i] * b
                 ra_d = radii_d[i] * a
                 rb_d = radii_d[i] * b
-                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            self.Re, p0, nondim)
+                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, self.Re)
                 pos += 1
-                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, rho, nu, 
-                                            self.Re, p0, nondim)
+                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, self.Re)
                 pos += 1
                 new_radii_u.append(ra_u)
                 new_radii_u.append(rb_u)
@@ -90,6 +86,17 @@ class ArteryNetwork(object):
         for artery in self.arteries:
             artery.mesh(dx)
             
+            
+    def boundary_layer_thickness(self, T):
+        """
+        Calculates the boundary layer thickness of the artery according to
+        
+        delta = sqrt(nu*T/2*pi).
+        
+        :param T: Length of one periodic cycle.
+        """
+        self._delta = np.sqrt(self.nu*T/(2*np.pi))
+            
     
     def set_time(self, dt, T, tc=1):
         """
@@ -106,7 +113,7 @@ class ArteryNetwork(object):
         self._T = T
         self._tc = tc
         for artery in self.arteries:
-            artery.boundary_layer_thickness(T)
+            artery.boundary_layer_thickness(self.nu, T)
             
             
     def timestep(self):
@@ -204,18 +211,7 @@ class ArteryNetwork(object):
         
 
     @staticmethod
-    def residuals(x, parent, d1, d2, theta, gamma):
-        U_p_np = (parent.U0[:,-1] + parent.U0[:,-2])/2 -\
-                theta*(parent.F(parent.U0[:,-1], j=-1) -\
-                parent.F(parent.U0[:,-2], j=-2))/2 +\
-                gamma*(parent.S(parent.U0[:,-1], j=-1) +\
-                parent.S(parent.U0[:,-2], j=-2))/2
-        U_d1_np = (d1.U0[:,1] + d1.U0[:,0])/2 -theta*(d1.F(d1.U0[:,1], j=1) -\
-                d1.F(d1.U0[:,0], j=0))/2 + gamma*(d1.S(parent.U0[:,1], j=1) +\
-                d1.S(d1.U0[:,0], j=0))/2
-        U_d2_np = (d2.U0[:,1] + d2.U0[:,0])/2 -theta*(d2.F(d2.U0[:,1], j=1) -\
-                d1.F(d2.U0[:,0], j=0))/2 + gamma*(d2.S(parent.U0[:,1], j=1) +\
-                d1.S(d2.U0[:,0], j=0))/2
+    def residuals(x, parent, d1, d2, theta, gamma, U_p_np, U_d1_np, U_d2_np):
         f_p_mp = utils.extrapolate(parent.L+parent.dx/2,
                 [parent.L-parent.dx, parent.L], [parent.f[-2], parent.f[-1]])
         f_d1_mp = utils.extrapolate(-d1.dx/2, [d1.dx, 0.0],
@@ -287,16 +283,14 @@ class ArteryNetwork(object):
         theta = dt/parent.dx
         gamma = dt/2
         U_p_np = (parent.U0[:,-1] + parent.U0[:,-2])/2 -\
-                theta*(parent.F(parent.U0[:,-1], j=-1) -\
-                parent.F(parent.U0[:,-2], j=-2))/2 +\
-                gamma*(parent.S(parent.U0[:,-1], j=-1) +\
-                parent.S(parent.U0[:,-2], j=-2))/2
-        U_d1_np = (d1.U0[:,1] + d1.U0[:,0])/2 -theta*(d1.F(d1.U0[:,1], j=1) -\
-                d1.F(d1.U0[:,0], j=0))/2 + gamma*(d1.S(parent.U0[:,1], j=1) +\
-                d1.S(d1.U0[:,0], j=0))/2
-        U_d2_np = (d2.U0[:,1] + d2.U0[:,0])/2 -theta*(d2.F(d2.U0[:,1], j=1) -\
-                d1.F(d2.U0[:,0], j=0))/2 + gamma*(d2.S(parent.U0[:,1], j=1) +\
-                d1.S(d2.U0[:,0], j=0))/2
+                theta*(parent.F(parent.U0[:,-1], j=-1) - parent.F(parent.U0[:,-2], j=-2))/2 +\
+                gamma*(parent.S(parent.U0[:,-1], j=-1) + parent.S(parent.U0[:,-2], j=-2))/2
+        U_d1_np = (d1.U0[:,1] + d1.U0[:,0])/2 -\
+                theta*(d1.F(d1.U0[:,1], j=1) - d1.F(d1.U0[:,0], j=0))/2 +\
+                gamma*(d1.S(d1.U0[:,1], j=1) + d1.S(d1.U0[:,0], j=0))/2
+        U_d2_np = (d2.U0[:,1] + d2.U0[:,0])/2 -\
+                theta*(d2.F(d2.U0[:,1], j=1) - d2.F(d2.U0[:,0], j=0))/2 +\
+                gamma*(d2.S(d2.U0[:,1], j=1) + d2.S(d2.U0[:,0], j=0))/2
         x0 = U_p_np[1]
         x1 = (parent.U0[1,-1] + parent.U0[1,-2])/2
         x2 = parent.U0[1,-1]
@@ -321,7 +315,7 @@ class ArteryNetwork(object):
         while k < 1000:
             Dfr = ArteryNetwork.jacobian(x, parent, d1, d2, theta, gamma)
             Dfr_inv = linalg.inv(Dfr)
-            fr = ArteryNetwork.residuals(x, parent, d1, d2, theta, gamma)
+            fr = ArteryNetwork.residuals(x, parent, d1, d2, theta, gamma, U_p_np, U_d1_np, U_d2_np)
             x1 = x - np.dot(Dfr_inv, fr)
             if (abs(x1 - x) < 1e-12).all():
                 break
@@ -378,7 +372,7 @@ class ArteryNetwork(object):
             
     def redimensionalise(self):
         for artery in self.arteries:
-            artery.P = (artery.P+artery.p0) * self.rho*self.qc**2 / self.rc**4
+            artery.P = (artery.P+self.p0) * self.rho*self.qc**2 / self.rc**4
             artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
             artery.U[1,:,:] = artery.U[1,:,:] * self.qc
             
@@ -388,7 +382,6 @@ class ArteryNetwork(object):
             artery.P = artery.P / 1333.22365 # convert g/(cm*s^2) to mmHg
             
     
-    @profile        
     def solve(self, q_in, out_args):
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
         i = 0
@@ -446,29 +439,6 @@ time step size." % (self.t))
             artery.dump_results(suffix, data_dir)
                        
                        
-    def spatial_plots(self, suffix, plot_dir, n):
-        for artery in self.arteries:
-            artery.spatial_plots(suffix, plot_dir, n)
-        
-        
-    def time_plots(self, suffix, plot_dir, n):
-        time = np.linspace(self.tf-self.T, self.tf, self.ntr)
-        for artery in self.arteries:
-            artery.time_plots(suffix, plot_dir, n, time)
-            
-            
-    def pq_plots(self, suffix, plot_dir):
-        for artery in self.arteries:
-            artery.pq_plot(suffix, plot_dir)
-            
-    
-    def s3d_plots(self, suffix, plot_dir):
-        time = np.linspace(self.tf-self.T, self.tf, self.ntr)
-        for artery in self.arteries:
-            artery.p3d_plot(suffix, plot_dir, time)
-            artery.q3d_plot(suffix, plot_dir, time)
-
-            
     @property
     def depth(self):
         return self._depth
@@ -529,10 +499,18 @@ time step size." % (self.t))
     @property
     def rho(self):
         return self._rho
+
+    @property
+    def nu(self):
+        return self._nu
         
     @property
     def Re(self):
         return self._Re
+
+    @property
+    def p0(self):
+        return self._p0
         
     @property
     def progress(self):
