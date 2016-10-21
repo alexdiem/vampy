@@ -396,7 +396,9 @@ class ArteryNetwork(object):
                 i += 1
                 
             for artery in self.arteries:
-                lw = LaxWendroff(artery.nx, artery.dx)
+                theta = self.dt/artery.dx
+                gamma = self.dt/2
+                lw = LaxWendroff(theta, gamma, artery.nx)
                 
                 if self.depth > 1 and artery.pos < 2**self.depth-1 - 2:
                     d1, d2 = self.get_daughters(artery)
@@ -419,7 +421,7 @@ class ArteryNetwork(object):
                     # outlet boundary condition
                     U_out = ArteryNetwork.outlet_bc(artery, self.dt, *out_args)
                 
-                artery.solve(lw, U_in, U_out, self.t, self.dt, save, i-1)
+                artery.solve(lw, U_in, U_out, save, i-1)
                 
                 if ArteryNetwork.cfl_condition(artery, self.dt) == False:
                     raise ValueError(

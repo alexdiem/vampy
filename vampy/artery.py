@@ -278,9 +278,9 @@ before setting initial conditions.')
         return f_l/2 * np.sqrt(A0_l/xi**3)
         
         
-    def solve(self, lw, U_in, U_out, t, dt, save, i):
+    def solve(self, lw, U_in, U_out, save, i):
         # solve for current timestep
-        U1 = lw.solve(self.U0, U_in, U_out, t, self.F, self.S, dt)
+        U1 = lw.solve(self.U0, U_in, U_out, self.F, self.S)
         if save:
             self.P[i,:] = self.p(self.U0[0,:])
             np.copyto(self.U[:,i,:], self.U0)
