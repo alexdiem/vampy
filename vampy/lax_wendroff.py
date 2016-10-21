@@ -29,13 +29,12 @@ class LaxWendroff(object):
         self._nx = nx
         
 
-    @profile
     def solve(self, U0, U_in, U_out, F, S):
         """
         Solver implementing Richtmyer's two-step Lax-Wendroff method [1,2].
         
         [1] R. D. Richtmyer. A Survey of Difference Methods for Non-Steady Fluid Dynamics. NCAR Technical Notes, 63(2), 1963.
-        [2] R. J. LeVeque. Numerical Methods for Conservation Laws. Birkh ̈auser Verlag, Basel, Switzerland, 2nd edition, 1992.
+        [2] R. J. LeVeque. Numerical Methods for Conservation Laws. Birkhauser Verlag, Basel, Switzerland, 2nd edition, 1992.
         
         :param U0: solution from previous time step
         :param U_in: inlet boundary condition
@@ -44,7 +43,7 @@ class LaxWendroff(object):
         :param S: source function (see [2])
         """
         # U0: previous timestep, U1 current timestep
-        U1 = np.zeros((2,nx))
+        U1 = np.zeros((2,self.nx))
         # apply boundary conditions
         U1[:,0] = U_in
         U1[:,-1] = U_out

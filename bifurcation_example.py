@@ -50,7 +50,7 @@ def main(param):
     tc = s['tc'] # number of cycles to simulate
     tf = T * tc # total simulation time
     dt = s['dt'] * qc / rc**3 # time step size
-    ntr = int(tf/dt / 800) # number of time steps to be stored
+    ntr = 200 # number of time steps to be stored
     dx = s['dx'] / rc # spatial step size
     Ru = a['Rd'] / rc # artery radius upstream
     Rd = a['Rd'] / rc # artery radius downstream
