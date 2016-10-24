@@ -18,37 +18,73 @@ class ArteryNetwork(object):
     """
     
     
-    def __init__(self, Ru, Rd, lam, k, rho, nu, p0, depth, nondim, ntr, 
-                 **kwargs):
+    def __init__(self, Ru, Rd, lam, k, rho, nu, p0, depth, ntr, Re, **kwargs):
+        """
+        ArteryNetwork constructor. Stores parameters and intialises Artery objects.
+        
+        :param Ru: Iterable containing upstream radii.
+        :param Rd: Iterable containing downstream radii.
+        :param lam: Iterable containing length-to-radius ratios.
+        :param k: Iterable containing elasticity parameters.
+        :param rho: Density of blood.
+        :param nu: Viscosity of blood.
+        :param p0: Zero transmural pressure.
+        :param depth: Depth of the arterial tree, e. g. 1 for one artery, 2 for three arteries.
+        :param ntr: Number of time steps in output.
+        :param Re: Reynolds number.
+        :param \**kwargs: See below
+        
+        :Keyword Arguments:
+            * *a* (``double``) -- Scaling factor for daughter vessel.
+            * *b* (``double``) -- Scaling factor for daughter vessel.
+        """
         self._depth = depth
         self._arteries = [0] * (2**depth - 1)
-        self._rc = nondim[0]
-        self._qc = nondim[1]
-        self._Re = nondim[2]
         if depth == 1:
             self.arteries[0] = Artery(0, Ru, Rd, lam, k, Re)
         elif 'a' in kwargs:
-            self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k)
+            self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k, Re)
         else:
-            self.setup_arteries(Ru, Rd, lam, k)            
+            self.setup_arteries(Ru, Rd, lam, k, Re)            
         self._t = 0.0
         self._ntr = ntr
-        self._progress = 2
+        self._progress = 0
         self._rho = rho
         self._nu = nu
         self._p0 = p0
         
         
-    def setup_arteries(self, Ru, Rd, lam, k):
+    def setup_arteries(self, Ru, Rd, lam, k, Re):
+        """
+        Creates Artery objects.
+        
+        :param Ru: Iterable containing upstream radii.
+        :param Rd: Iterable containing downstream radii.
+        :param lam: Iterable containing length-to-radius ratios.
+        :param k: Iterable containing elasticity parameters.
+        :param Re: Reynolds number.
+        """
         for i in range(len(Ru)):
-            self.arteries[i] = Artery(i, Ru[i], Rd[i], lam[i], k, self.Re)
+            self.arteries[i] = Artery(i, Ru[i], Rd[i], lam[i], k, Re)
         
         
-    def setup_arteries_ab(self, Ru, Rd, a, b, lam, k):
+    def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, Re):
+        """
+        Creates Artery objects using scaling parameters.
+        
+        :param Ru: Iterable containing upstream radii.
+        :param Rd: Iterable containing downstream radii.
+        :param a: Scaling parameter for daughter vessel.
+        :param b: Scaling parameter for daughter vessel.
+        :param lam: Iterable containing length-to-radius ratios.
+        :param k: Iterable containing elasticity parameters.
+        :param Re: Reynolds number.
+        :raises: ValueError
+        """
         if type(Ru) == float:
             raise ValueError("Parameter depth has to be equal to 1 if only one artery is specified.")
         pos = 0
-        self.arteries[pos] = Artery(pos, Ru, Rd, lam, k. self.Re)
+        self.arteries[pos] = Artery(pos, Ru, Rd, lam, k, Re)
         pos += 1
         radii_u = [Ru]
         radii_d = [Rd]
@@ -60,9 +96,9 @@ class ArteryNetwork(object):
                 rb_u = radii_u[i] * b
                 ra_d = radii_d[i] * a
                 rb_d = radii_d[i] * b
-                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, self.Re)
+                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, Re)
                 pos += 1
-                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, self.Re)
+                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, Re)
                 pos += 1
                 new_radii_u.append(ra_u)
                 new_radii_u.append(rb_u)
@@ -73,8 +109,13 @@ class ArteryNetwork(object):
             
             
     def initial_conditions(self, u0):
+        """
+        Invokes initial_conditions(u0) on each artery in the network.
+        
+        :param u0: Initial condition for U_1.
+        """
         for artery in self.arteries:
-            artery.initial_conditions(u0, self.ntr)            
+            artery.initial_conditions(u0)            
             
             
     def mesh(self, dx):
@@ -84,20 +125,9 @@ class ArteryNetwork(object):
         :param dx: Spatial step size
         """
         for artery in self.arteries:
-            artery.mesh(dx)
+            artery.mesh(dx, self.ntr)
             
             
-    def boundary_layer_thickness(self, T):
-        """
-        Calculates the boundary layer thickness of the artery according to
-        
-        delta = sqrt(nu*T/2*pi).
-        
-        :param T: Length of one periodic cycle.
-        """
-        self._delta = np.sqrt(self.nu*T/(2*np.pi))
-            
-    
     def set_time(self, dt, T, tc=1):
         """
         Sets timing parameters for the artery network and invokes
@@ -117,11 +147,23 @@ class ArteryNetwork(object):
             
             
     def timestep(self):
+        """
+        Increases time by dt.
+        """
         self._t += self.dt
             
     
     @staticmethod        
     def inlet_bc(artery, q_in, in_t, dt):
+        """
+        Calculates inlet boundary condition.
+        
+        :param artery: Inlet artery.
+        :param q_in: Function containing inlet condition U_1(t).
+        :param in_t: Current time.
+        :param dt: Time step size.
+        :returns: Array containing solution U at the inlet. 
+        """
         q_0_np = q_in(in_t-dt/2) # q_0_n+1/2
         q_0_n1 = q_in(in_t) # q_0_n+1
         U_0_n = artery.U0[:,0] # U_0_n
@@ -129,8 +171,7 @@ class ArteryNetwork(object):
         U_12_np = (U_1_n+U_0_n)/2 -\
                     dt*(artery.F(U_1_n, j=1)-artery.F(U_0_n, j=0))/(2*artery.dx) +\
                     dt*(artery.S(U_1_n, j=1)+artery.S(U_0_n, j=0))/4 # U_1/2_n+1/2
-        q_12_np = U_12_np[1] # q_1/2_n+1/2
-        a_0_n1 = U_0_n[0] - 2*dt*(q_12_np - q_0_np)/artery.dx
+        a_0_n1 = U_0_n[0] - 2*dt*(U_12_np[1] - q_0_np)/artery.dx
         return np.array([a_0_n1, q_0_n1])
      
     
@@ -147,22 +188,27 @@ class ArteryNetwork(object):
         :param Ct: compliance element
         :returns: Numpy array containing the outlet area and flux
         """
-        dx = artery.dx
-        a_n = artery.U0[0,-1]
-        q_n = artery.U0[1,-1]
-        p_out = p_o = artery.p(a_n, j=-1) # initial guess for p_out
+        theta = dt/artery.dx
+        gamma = dt/2
         U0_1 = artery.U0[:,-1]
         U0_2 = artery.U0[:,-2]
         U0_3 = artery.U0[:,-3]
-        U_np_mp = (U0_1 + U0_2)/2 - dt*(artery.F(U0_1, j=-1) - artery.F(U0_2, j=-2))/(2*dx) + dt*(artery.S(U0_1, j=-1) + artery.S(U0_2, j=-2))/4
-        U_np_mm = (U0_2 + U0_3)/2 - dt*(artery.F(U0_2, j=-2) - artery.F(U0_3, j=-3))/(2*dx) + dt*(artery.S(U0_2, j=-2) + artery.S(U0_3, j=-3))/4
-        U_mm = U0_2 - dt*(artery.F(U_np_mp, j=-2) - artery.F(U_np_mm, j=-2))/dx + dt*(artery.S(U_np_mp, j=-2) + artery.S(U_np_mm, j=-2))/2
+        a_n, q_n = U0_1
+        p_out = p_o = artery.p(a_n, j=-1) # initial guess for p_out
+        U_np_mp = (U0_1 + U0_2)/2 -\
+                theta*(artery.F(U0_1, j=-1) - artery.F(U0_2, j=-2))/2 +\
+                gamma*(artery.S(U0_1, j=-1) + artery.S(U0_2, j=-2))/2
+        U_np_mm = (U0_2 + U0_3)/2 -\
+                theta*(artery.F(U0_2, j=-2) - artery.F(U0_3, j=-3))/2 +\
+                gamma*(artery.S(U0_2, j=-2) + artery.S(U0_3, j=-3))/2
+        U_mm = U0_2 - theta*(artery.F(U_np_mp, j=-2) - artery.F(U_np_mm, j=-2)) +\
+                gamma*(artery.S(U_np_mp, j=-2) + artery.S(U_np_mm, j=-2))
         k = 0
         X = dt/(R1*R2*Ct)
         while k < 1000:
             p_old = p_o
             q_out = X*p_out - X*(R1+R2)*q_n + (p_o-p_out)/R1 + q_n
-            a_out = a_n - dt * (q_out - U_mm[1])/dx
+            a_out = a_n - theta * (q_out - U_mm[1])
             p_o = artery.p(a_out, j=-1)
             if abs(p_old - p_o) < 1e-7:
                 break
@@ -172,6 +218,19 @@ class ArteryNetwork(object):
         
     @staticmethod
     def jacobian(x, parent, d1, d2, theta, gamma):
+        """
+        Calculates the Jacobian for using Newton's method to solve bifurcation inlet and outlet boundary conditions [1].
+        
+        [1] [1] M. S. Olufsen. Modeling of the Arterial System with Reference to an Anesthesia Simulator. PhD thesis, University of Roskilde, Denmark, 1998.
+        
+        :param x: Solution of the system of equations.
+        :param parent: Artery object of the parent vessel.
+        :param d1: Artery object of the first daughter vessel.
+        :param d2: Artery object of the second daughter vessel.
+        :param theta: dt/dx
+        :param gamma: dt/2
+        :returns: The Jacobian for Newton's method.
+        """
         M12 = parent.L + parent.dx/2
         D1_12 = -d1.dx/2
         D2_12 = -d2.dx/2
@@ -189,8 +248,6 @@ class ArteryNetwork(object):
         Dfr[0,11] = theta * ((x[2]/x[11])**2 - parent.dBdxi(M12,x[11])) +\
                     gamma * (parent.dFdxi2(M12, x[2], x[11]) +\
                             parent.dBdxdxi(M12, x[11]))
-                            
-                            
         Dfr[1,5] = 2*theta*x[5]/x[14] + gamma*d1.dFdxi1(D1_12, x[14])
         Dfr[1,14] = theta * (-(x[5]/x[14])**2 + d1.dBdxi(D1_12,x[14])) +\
                     gamma * (d1.dFdxi2(D1_12, x[5], x[14]) +\
@@ -212,6 +269,22 @@ class ArteryNetwork(object):
 
     @staticmethod
     def residuals(x, parent, d1, d2, theta, gamma, U_p_np, U_d1_np, U_d2_np):
+        """
+        Calculates the residual equations for using Newton's method to solve bifurcation inlet and outlet boundary conditions [1].
+        
+        [1] M. S. Olufsen. Modeling of the Arterial System with Reference to an Anesthesia Simulator. PhD thesis, University of Roskilde, Denmark, 1998.
+        [2] 
+        
+        :param x: Solution of the system of equations.
+        :param parent: Artery object of the parent vessel.
+        :param d1: Artery object of the first daughter vessel.
+        :param d2: Artery object of the second daughter vessel.
+        :param theta: dt/dx
+        :param gamma: dt/2
+        :param U_p_np: U_(M-1/2)^(n+1/2) [2]
+        :param U_p_np: U_(M-1/2)^(n+1/2) [2]
+        :returns: The Jacobian for Newton's method.
+        """
         f_p_mp = utils.extrapolate(parent.L+parent.dx/2,
                 [parent.L-parent.dx, parent.L], [parent.f[-2], parent.f[-1]])
         f_d1_mp = utils.extrapolate(-d1.dx/2, [d1.dx, 0.0],
@@ -370,21 +443,17 @@ class ArteryNetwork(object):
             self.progress += it        
             
             
-    def redimensionalise(self):
+    def redimensionalise(self, rc, qc):
         for artery in self.arteries:
-            artery.P = (artery.P+self.p0) * self.rho*self.qc**2 / self.rc**4
-            artery.U[0,:,:] = artery.U[0,:,:] * self.rc**2  
-            artery.U[1,:,:] = artery.U[1,:,:] * self.qc
-            
-            
-    def p_to_mmHg(self):
-        for artery in self.arteries:
-            artery.P = artery.P / 1333.22365 # convert g/(cm*s^2) to mmHg
+            artery.P = ((artery.P+self.p0) * self.rho*qc**2 / rc**4) / 1333.22365
+            artery.U[0,:,:] = artery.U[0,:,:] * rc**2  
+            artery.U[1,:,:] = artery.U[1,:,:] * qc
             
     
     def solve(self, q_in, out_args):
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
         i = 0
+        self.print_status()
         self.timestep()
         bc_in = np.zeros((len(self.arteries), 2))
         while self.t < self.tf:
@@ -431,9 +500,6 @@ time step size." % (self.t))
                 
             self.timestep()
             self.print_status()
-        
-        self.redimensionalise()
-        self.p_to_mmHg()
                 
             
     def dump_results(self, suffix, data_dir):
@@ -489,14 +555,7 @@ time step size." % (self.t))
     @property
     def dtr(self):
         return self._dtr
-        
-    @property
-    def rc(self):
-        return self._rc
-        
-    @property
-    def qc(self):
-        return self._qc
+
         
     @property
     def rho(self):
@@ -506,9 +565,6 @@ time step size." % (self.t))
     def nu(self):
         return self._nu
         
-    @property
-    def Re(self):
-        return self._Re
 
     @property
     def p0(self):

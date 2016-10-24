@@ -38,7 +38,7 @@ class Artery(object):
         self._Re = Re
         
         
-    def initial_conditions(self, u0, ntr):
+    def initial_conditions(self, u0):
         """
         Initialises solution arrays with initial conditions.
         Checks if artery.mesh(dx) has been called first.
@@ -50,14 +50,11 @@ class Artery(object):
         if not hasattr(self, '_nx'):
             raise AttributeError('Artery not meshed. Execute mesh(self, dx) \
 before setting initial conditions.')
-        self.U = np.zeros((2, ntr, self.nx))
-        self.P = np.zeros((ntr, self.nx))
-        self.U0 = np.zeros((2, self.nx))
         self.U0[0,:] = self.A0.copy()
         self.U0[1,:].fill(0.0)
         
         
-    def mesh(self, dx):
+    def mesh(self, dx, ntr):
         """
         Meshes an artery using spatial step size dx.
         
@@ -75,6 +72,9 @@ before setting initial conditions.')
         self._f = 4/3 * Ehr
         self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
         self._xgrad = np.gradient(R, dx)
+        self.U = np.zeros((2, ntr, self.nx))
+        self.P = np.zeros((ntr, self.nx))
+        self.U0 = np.zeros((2, self.nx))
         
         
     def boundary_layer_thickness(self, nu, T):
@@ -99,7 +99,6 @@ before setting initial conditions.')
 
         :Keyword Arguments:
             * *j* (``int``) -- Index variable
-
         """
         if 'j' in kwargs:
             j = kwargs['j']
