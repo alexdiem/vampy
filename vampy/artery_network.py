@@ -273,7 +273,7 @@ class ArteryNetwork(object):
         Calculates the residual equations for using Newton's method to solve bifurcation inlet and outlet boundary conditions [1].
         
         [1] M. S. Olufsen. Modeling of the Arterial System with Reference to an Anesthesia Simulator. PhD thesis, University of Roskilde, Denmark, 1998.
-        [2] 
+        [2] R. J. LeVeque. Numerical Methods for Conservation Laws. Birkhauser Verlag, Basel, Switzerland, 2nd edition, 1992.
         
         :param x: Solution of the system of equations.
         :param parent: Artery object of the parent vessel.
@@ -283,7 +283,7 @@ class ArteryNetwork(object):
         :param gamma: dt/2
         :param U_p_np: U_(M-1/2)^(n+1/2) [2]
         :param U_p_np: U_(M-1/2)^(n+1/2) [2]
-        :returns: The Jacobian for Newton's method.
+        :returns: The residual equations for Newton's method.
         """
         f_p_mp = utils.extrapolate(parent.L+parent.dx/2,
                 [parent.L-parent.dx, parent.L], [parent.f[-2], parent.f[-1]])
@@ -353,6 +353,15 @@ class ArteryNetwork(object):
 
     @staticmethod
     def bifurcation(parent, d1, d2, dt):
+        """
+        Calculates the bifurcation boundary condition using Newton's method.
+        
+        :param parent: Artery object of the parent vessel.
+        :param d1: Artery object of the first daughter vessel.
+        :param d2: Artery object of the second daughter vessel.
+        :param dt: Time step size.
+        :returns: Array containing the solution at the bifurcation boundary.
+        """
         theta = dt/parent.dx
         gamma = dt/2
         U_p_np = (parent.U0[:,-1] + parent.U0[:,-2])/2 -\
@@ -399,6 +408,16 @@ class ArteryNetwork(object):
     
     @staticmethod
     def cfl_condition(artery, dt):
+        """
+        Tests whether the CFL condition
+        
+        dt/dx < u + c,
+        
+        where u is velocity (q/a) and c is the wave speed, is fulfilled.
+        
+        :param artery: Artery object for which the CFL condition is tested.
+        :param dt: Time step size.
+        """
         a = artery.U0[0,1]
         c = artery.wave_speed(a)
         u = artery.U0[1,1] / a
@@ -414,17 +433,7 @@ class ArteryNetwork(object):
         
         
     @staticmethod
-    def printProgress (iteration, total, prefix = '', suffix = '', decimals = 1, barLength = 100):
-        """
-        Call in a loop to create terminal progress bar
-        @params:
-            iteration   - Required  : current iteration (Int)
-            total       - Required  : total iterations (Int)
-            prefix      - Optional  : prefix string (Str)
-            suffix      - Optional  : suffix string (Str)
-            decimals    - Optional  : positive number of decimals in percent complete (Int)
-            barLength   - Optional  : character length of bar (Int)
-        """
+    def _printProgress (iteration, total, prefix = '', suffix = '', decimals = 1, barLength = 100):
         formatStr       = "{0:." + str(decimals) + "f}"
         percents        = formatStr.format(100 * (iteration / float(total)))
         filledLength    = int(round(barLength * iteration / float(total)))
@@ -436,14 +445,23 @@ class ArteryNetwork(object):
         
         
     def print_status(self):
+        """
+        Prints a status bar to the terminal in 2% increments.
+        """
         it = 2
         if self.t % (self.tf/(100/it)) < self.dt:
-            ArteryNetwork.printProgress(self.progress, 100,
+            ArteryNetwork._printProgress(self.progress, 100,
                     prefix = 'Progress:', suffix = 'Complete', barLength = 50)
             self.progress += it        
             
             
     def redimensionalise(self, rc, qc):
+        """
+        Converts dimensionless solutions to dimensional solutions.
+        
+        :param rc: Characteristic radius.
+        :param qc: Characteristic flux.
+        """
         for artery in self.arteries:
             artery.P = ((artery.P+self.p0) * self.rho*qc**2 / rc**4) / 1333.22365
             artery.U[0,:,:] = artery.U[0,:,:] * rc**2  
@@ -451,6 +469,12 @@ class ArteryNetwork(object):
             
     
     def solve(self, q_in, out_args):
+        """
+        ArteryNetwork solver. Assigns boundary conditions to Artery object in the arterial tree and calls their solvers.
+        
+        :param q_in: Function for flux at the inlet.
+        :param out_args: Iterable containing outlet boundary condition parameters.
+        """
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
         i = 0
         self.print_status()
@@ -503,6 +527,12 @@ time step size." % (self.t))
                 
             
     def dump_results(self, suffix, data_dir):
+        """
+        Writes solution of each artery into CSV files.
+        
+        :param suffix: Simulation identifier.
+        :param data_dir: Directory to store CSV files in.
+        """
         for artery in self.arteries:
             artery.dump_results(suffix, data_dir)
                        
