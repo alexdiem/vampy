@@ -11,6 +11,7 @@ from matplotlib import cm
 from scipy import interpolate
 
 from vampy import vamplot
+from vampy import utils
 
 plt.rcParams['axes.labelsize'] = 9
 plt.rcParams['xtick.labelsize'] = 9
@@ -87,18 +88,21 @@ def plot(fig_dims, suffix, plot_dir, x, y, labels, xlabel, ylabel, fname):
     plt.savefig(fname, dpi=600, bbox_inches='tight')
 
 
-def main():
-    data_dir = "data"
-    plot_dir = "plots"
-    pos = 0
-    suffix = "bifurcation"
-    T = 0.917
-    tc = 4
+def main(param):
+    # read config file
+    f, a, s = utils.read_config(param) 
+    
+    data_dir = f['data_dir']
+    plot_dir = f['plot_dir']
+    suffix = f['run_id']
+    T = s['T']
+    tc = s['tc']
     tf = T*tc
-    L = 0.37*56.22  
+    
+    pos = 0
+    L = a['Ru'][pos]*a['lam'][pos]
     
     P = np.loadtxt("%s/%s/p%d_%s.csv" % (data_dir, suffix, pos, suffix), delimiter=',')
-    
     t = np.linspace(tf-T, tf, P.shape[1])
     x = np.linspace(0,L,P.shape[0])
     f = interpolate.interp2d(t, x, P, kind='linear')
@@ -118,7 +122,6 @@ def main():
     vamplot.p3d_plot(fig_dims, suffix, plot_dir, t, P, L, pos)
     
     
-            
-    
 if __name__ == "__main__":
-    main()
+    script, param = sys.argv
+    main(param)

@@ -21,16 +21,15 @@ def inlet(t, qc, rc):
     """
     Function describing the inlet boundary condition. Returns a function.
     """
-    q, t = utils.read_csv("./data/example_inlet.csv")
-    t = [elem * qc / rc**3 for elem in t]
-    q = [elem / qc for elem in q]
+    Q = np.loadtxt("./data/example_inlet.csv", delimiter=',')
+    t = [elem * qc / rc**3 for elem in Q[:,0]]
+    q = [elem / qc for elem in Q[:,1]]
     return interp1d(t, q, kind='linear', bounds_error=False, fill_value=q[0])
 
 
 def main(param):
     """
-    Example main.py for running a VaMpy model of a single artery without
-    bifurcations.
+    Example main.py for running a VaMpy model of a bifurcation.
     """
     
     # read config file
@@ -60,7 +59,7 @@ def main(param):
     k = (a['k1']/kc, a['k2']*rc, a['k3']/kc) # elasticity model parameters (Eh/r)
     out_args = [a['R1']*rc**4/(qc*rho), a['R2']*rc**4/(qc*rho), 
             a['Ct']*rho*qc**2/rc**7] # Windkessel parameters
-    p0 = (80 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
+    p0 = (0 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
     
     # inlet boundary condition
     Q = 20/qc
@@ -86,6 +85,5 @@ def main(param):
         
     
 if __name__ == "__main__":
-    #warnings.filterwarnings("error")
     script, param = sys.argv
     main(param)
