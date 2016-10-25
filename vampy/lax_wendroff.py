@@ -6,7 +6,6 @@ import sys
 import numpy as np
 from scipy.interpolate import interp1d
 
-from blood_flow import *
 import utils
 
 
