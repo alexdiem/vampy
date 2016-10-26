@@ -1,3 +1,6 @@
 dist/
 vampy/*.pyc
 VaMpy.egg-info/
+docs/source
+docs/build
+docs/Makefile
