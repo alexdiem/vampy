@@ -9,8 +9,9 @@ Welcome to Vascular Modelling in Python toolkit (VaMpy)'s documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
+   modules
 
 
 Indices and tables
