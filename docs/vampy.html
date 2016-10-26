@@ -49,10 +49,27 @@
 <em class="property">class </em><code class="descclassname">vampy.artery.</code><code class="descname">Artery</code><span class="sig-paren">(</span><em>pos</em>, <em>Ru</em>, <em>Rd</em>, <em>lam</em>, <em>k</em>, <em>Re</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/vampy/artery.html#Artery"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vampy.artery.Artery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
 <p>Class representing an artery.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>pos</strong> &#8211; Artery ID</li>
+<li><strong>Ru</strong> &#8211; Upstream radius</li>
+<li><strong>Rd</strong> &#8211; Downstream radius</li>
+<li><strong>lam</strong> &#8211; Length-to-radius (upstream) ratio</li>
+<li><strong>k</strong> &#8211; Iterable containing elasticity parameters k1, k2, k3</li>
+<li><strong>Re</strong> &#8211; Reynold&#8217;s number</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="attribute">
 <dt id="vampy.artery.Artery.A0">
 <code class="descname">A0</code><a class="headerlink" href="#vampy.artery.Artery.A0" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Area at rest</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery.Artery.F">
@@ -88,22 +105,26 @@
 <dl class="attribute">
 <dt id="vampy.artery.Artery.L">
 <code class="descname">L</code><a class="headerlink" href="#vampy.artery.Artery.L" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Artery length</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery.Artery.Rd">
 <code class="descname">Rd</code><a class="headerlink" href="#vampy.artery.Artery.Rd" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Downstream radius</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery.Artery.Re">
 <code class="descname">Re</code><a class="headerlink" href="#vampy.artery.Artery.Re" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Reynold&#8217;s number</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery.Artery.Ru">
 <code class="descname">Ru</code><a class="headerlink" href="#vampy.artery.Artery.Ru" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Upstream radius</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery.Artery.S">
@@ -268,12 +289,14 @@
 <dl class="attribute">
 <dt id="vampy.artery.Artery.delta">
 <code class="descname">delta</code><a class="headerlink" href="#vampy.artery.Artery.delta" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Boundary layer thickness</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery.Artery.df">
 <code class="descname">df</code><a class="headerlink" href="#vampy.artery.Artery.df" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>df/dr</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery.Artery.dpdx">
@@ -318,12 +341,14 @@
 <dl class="attribute">
 <dt id="vampy.artery.Artery.dx">
 <code class="descname">dx</code><a class="headerlink" href="#vampy.artery.Artery.dx" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Spatial step size</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery.Artery.f">
 <code class="descname">f</code><a class="headerlink" href="#vampy.artery.Artery.f" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>f = 4/3 Eh/r</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery.Artery.initial_conditions">
@@ -350,7 +375,8 @@ Checks if artery.mesh(dx) has been called first.</p>
 <dl class="attribute">
 <dt id="vampy.artery.Artery.k">
 <code class="descname">k</code><a class="headerlink" href="#vampy.artery.Artery.k" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Elasticity parameters for relation Eh/r = k1 * exp(k2*r) + k3</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery.Artery.mesh">
@@ -369,7 +395,8 @@ Checks if artery.mesh(dx) has been called first.</p>
 <dl class="attribute">
 <dt id="vampy.artery.Artery.nx">
 <code class="descname">nx</code><a class="headerlink" href="#vampy.artery.Artery.nx" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Number of spatial steps</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery.Artery.p">
@@ -401,7 +428,8 @@ Checks if artery.mesh(dx) has been called first.</p>
 <dl class="attribute">
 <dt id="vampy.artery.Artery.pos">
 <code class="descname">pos</code><a class="headerlink" href="#vampy.artery.Artery.pos" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Position in ArteryNetwork</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery.Artery.solve">
@@ -444,7 +472,8 @@ Stores new solution in output array U if save is True.</p>
 <dl class="attribute">
 <dt id="vampy.artery.Artery.xgrad">
 <code class="descname">xgrad</code><a class="headerlink" href="#vampy.artery.Artery.xgrad" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>dr/dx</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -456,15 +485,45 @@ Stores new solution in output array U if save is True.</p>
 <em class="property">class </em><code class="descclassname">vampy.artery_network.</code><code class="descname">ArteryNetwork</code><span class="sig-paren">(</span><em>Ru</em>, <em>Rd</em>, <em>lam</em>, <em>k</em>, <em>rho</em>, <em>nu</em>, <em>p0</em>, <em>depth</em>, <em>ntr</em>, <em>Re</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/vampy/artery_network.html#ArteryNetwork"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#vampy.artery_network.ArteryNetwork" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
 <p>Class representing a network of arteries.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>Ru</strong> &#8211; Iterable containing upstream radii.</li>
+<li><strong>Rd</strong> &#8211; Iterable containing downstream radii.</li>
+<li><strong>lam</strong> &#8211; Iterable containing length-to-radius ratios.</li>
+<li><strong>k</strong> &#8211; Iterable containing elasticity parameters.</li>
+<li><strong>rho</strong> &#8211; Density of blood.</li>
+<li><strong>nu</strong> &#8211; Viscosity of blood.</li>
+<li><strong>p0</strong> &#8211; Zero transmural pressure.</li>
+<li><strong>depth</strong> &#8211; Depth of the arterial tree, e. g. 1 for one artery, 2 for three arteries.</li>
+<li><strong>ntr</strong> &#8211; Number of time steps in output.</li>
+<li><strong>Re</strong> &#8211; Reynolds number.</li>
+<li><strong>**kwargs</strong> &#8211; See below</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Keyword Arguments:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><ul class="first last simple">
+<li><em>a</em> (<code class="docutils literal"><span class="pre">double</span></code>) &#8211; Scaling factor for daughter vessel.</li>
+<li><em>b</em> (<code class="docutils literal"><span class="pre">double</span></code>) &#8211; Scaling factor for daughter vessel.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.T">
 <code class="descname">T</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.T" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Period length</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.arteries">
 <code class="descname">arteries</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.arteries" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>List containing Artery objects</p>
+</dd></dl>
 
 <dl class="staticmethod">
 <dt id="vampy.artery_network.ArteryNetwork.bifurcation">
@@ -512,17 +571,20 @@ Stores new solution in output array U if save is True.</p>
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.depth">
 <code class="descname">depth</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.depth" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Network depth</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.dt">
 <code class="descname">dt</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.dt" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Time step size</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.dtr">
 <code class="descname">dtr</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.dtr" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Time step size in output</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery_network.ArteryNetwork.dump_results">
@@ -625,19 +687,16 @@ Stores new solution in output array U if save is True.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="vampy.artery_network.ArteryNetwork.nt">
-<code class="descname">nt</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.nt" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.ntr">
 <code class="descname">ntr</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.ntr" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Number of time steps in output</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.nu">
 <code class="descname">nu</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.nu" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Viscosity of blood</p>
+</dd></dl>
 
 <dl class="staticmethod">
 <dt id="vampy.artery_network.ArteryNetwork.outlet_bc">
@@ -667,7 +726,8 @@ condition.</p>
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.p0">
 <code class="descname">p0</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.p0" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Zero transmural pressure</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery_network.ArteryNetwork.print_status">
@@ -678,7 +738,8 @@ condition.</p>
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.progress">
 <code class="descname">progress</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.progress" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Simulation progress</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery_network.ArteryNetwork.redimensionalise">
@@ -730,7 +791,8 @@ condition.</p>
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.rho">
 <code class="descname">rho</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.rho" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Density of blood</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery_network.ArteryNetwork.set_time">
@@ -820,17 +882,20 @@ boundary_layer_thickness(T) in each artery.</p>
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.t">
 <code class="descname">t</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.t" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Current time</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.tc">
 <code class="descname">tc</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.tc" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Number of periods in simulation</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.artery_network.ArteryNetwork.tf">
 <code class="descname">tf</code><a class="headerlink" href="#vampy.artery_network.ArteryNetwork.tf" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Total simulation time</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.artery_network.ArteryNetwork.timestep">
@@ -851,12 +916,14 @@ boundary_layer_thickness(T) in each artery.</p>
 <dl class="attribute">
 <dt id="vampy.lax_wendroff.LaxWendroff.gamma">
 <code class="descname">gamma</code><a class="headerlink" href="#vampy.lax_wendroff.LaxWendroff.gamma" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>dt/2</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="vampy.lax_wendroff.LaxWendroff.nx">
 <code class="descname">nx</code><a class="headerlink" href="#vampy.lax_wendroff.LaxWendroff.nx" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Number of spatial steps</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="vampy.lax_wendroff.LaxWendroff.solve">
@@ -884,7 +951,8 @@ boundary_layer_thickness(T) in each artery.</p>
 <dl class="attribute">
 <dt id="vampy.lax_wendroff.LaxWendroff.theta">
 <code class="descname">theta</code><a class="headerlink" href="#vampy.lax_wendroff.LaxWendroff.theta" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>dt/dx</p>
+</dd></dl>
 
 </dd></dl>
 

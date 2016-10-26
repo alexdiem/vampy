@@ -56,28 +56,28 @@
 <div class="viewcode-block" id="ArteryNetwork"><a class="viewcode-back" href="../../vampy.html#vampy.artery_network.ArteryNetwork">[docs]</a><span class="k">class</span> <span class="nc">ArteryNetwork</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class representing a network of arteries.</span>
+<span class="sd">    </span>
+<span class="sd">    :param Ru: Iterable containing upstream radii.</span>
+<span class="sd">    :param Rd: Iterable containing downstream radii.</span>
+<span class="sd">    :param lam: Iterable containing length-to-radius ratios.</span>
+<span class="sd">    :param k: Iterable containing elasticity parameters.</span>
+<span class="sd">    :param rho: Density of blood.</span>
+<span class="sd">    :param nu: Viscosity of blood.</span>
+<span class="sd">    :param p0: Zero transmural pressure.</span>
+<span class="sd">    :param depth: Depth of the arterial tree, e. g. 1 for one artery, 2 for three arteries.</span>
+<span class="sd">    :param ntr: Number of time steps in output.</span>
+<span class="sd">    :param Re: Reynolds number.</span>
+<span class="sd">    :param \**kwargs: See below</span>
+<span class="sd">      </span>
+<span class="sd">    :Keyword Arguments:</span>
+<span class="sd">        * *a* (``double``) -- Scaling factor for daughter vessel.</span>
+<span class="sd">        * *b* (``double``) -- Scaling factor for daughter vessel.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
     
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Ru</span><span class="p">,</span> <span class="n">Rd</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span> <span class="n">ntr</span><span class="p">,</span> <span class="n">Re</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        ArteryNetwork constructor. Stores parameters and intialises Artery objects.</span>
-<span class="sd">        </span>
-<span class="sd">        :param Ru: Iterable containing upstream radii.</span>
-<span class="sd">        :param Rd: Iterable containing downstream radii.</span>
-<span class="sd">        :param lam: Iterable containing length-to-radius ratios.</span>
-<span class="sd">        :param k: Iterable containing elasticity parameters.</span>
-<span class="sd">        :param rho: Density of blood.</span>
-<span class="sd">        :param nu: Viscosity of blood.</span>
-<span class="sd">        :param p0: Zero transmural pressure.</span>
-<span class="sd">        :param depth: Depth of the arterial tree, e. g. 1 for one artery, 2 for three arteries.</span>
-<span class="sd">        :param ntr: Number of time steps in output.</span>
-<span class="sd">        :param Re: Reynolds number.</span>
-<span class="sd">        :param \**kwargs: See below</span>
-<span class="sd">        </span>
-<span class="sd">        :Keyword Arguments:</span>
-<span class="sd">            * *a* (``double``) -- Scaling factor for daughter vessel.</span>
-<span class="sd">            * *b* (``double``) -- Scaling factor for daughter vessel.</span>
+<span class="sd">        ArteryNetwork constructor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_depth</span> <span class="o">=</span> <span class="n">depth</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_arteries</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">depth</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
@@ -580,69 +580,103 @@
                        
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">depth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Network depth</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_depth</span>
         
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">arteries</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        List containing Artery objects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arteries</span>
         
         
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">nt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nt</span>
-        
-        
-    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Time step size</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dt</span>
         
     
     <span class="nd">@property</span>        
     <span class="k">def</span> <span class="nf">tf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Total simulation time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tf</span>
         
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">T</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Period length</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_T</span>
         
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">tc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Number of periods in simulation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tc</span>
         
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">t</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Current time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_t</span>
         
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">ntr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Number of time steps in output</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ntr</span>
         
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dtr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Time step size in output</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dtr</span>
 
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">rho</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Density of blood</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rho</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">nu</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Viscosity of blood</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nu</span>
         
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">p0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Zero transmural pressure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_p0</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">progress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simulation progress</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_progress</span>
         
     <span class="nd">@progress.setter</span>

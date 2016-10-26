@@ -57,19 +57,19 @@
 <div class="viewcode-block" id="Artery"><a class="viewcode-back" href="../../vampy.html#vampy.artery.Artery">[docs]</a><span class="k">class</span> <span class="nc">Artery</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class representing an artery.</span>
+<span class="sd">    </span>
+<span class="sd">    :param pos: Artery ID</span>
+<span class="sd">    :param Ru: Upstream radius</span>
+<span class="sd">    :param Rd: Downstream radius</span>
+<span class="sd">    :param lam: Length-to-radius (upstream) ratio </span>
+<span class="sd">    :param k: Iterable containing elasticity parameters k1, k2, k3</span>
+<span class="sd">    :param Re: Reynold&#39;s number</span>
 <span class="sd">    &quot;&quot;&quot;</span>
         
         
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">Ru</span><span class="p">,</span> <span class="n">Rd</span><span class="p">,</span> <span class="n">lam</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">Re</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Artery constructor.</span>
-<span class="sd">        </span>
-<span class="sd">        :param pos: Artery ID</span>
-<span class="sd">        :param Ru: Upstream radius</span>
-<span class="sd">        :param Rd: Downstream radius</span>
-<span class="sd">        :param lam: Length-to-radius (upstream) ratio </span>
-<span class="sd">        :param k: Iterable containing elasticity parameters k1, k2, k3</span>
-<span class="sd">        :param Re: Reynold&#39;s number</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span> <span class="o">=</span> <span class="n">pos</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_Ru</span> <span class="o">=</span> <span class="n">Ru</span>
@@ -456,6 +456,9 @@
                    
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">L</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Artery length</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_L</span>
 
     <span class="nd">@L.setter</span>
@@ -464,50 +467,86 @@
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">nx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Number of spatial steps</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nx</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">Ru</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Upstream radius</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Ru</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">Rd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Downstream radius</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Rd</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">k</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Elasticity parameters for relation Eh/r = k1 * exp(k2*r) + k3</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_k</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">A0</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Area at rest</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_A0</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Spatial step size</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dx</span>
     
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">pos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Position in ArteryNetwork</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        f = 4/3 Eh/r</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_f</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">xgrad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        dr/dx</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xgrad</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        df/dr</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">Re</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reynold&#39;s number</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_Re</span>
         
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">delta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Boundary layer thickness</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delta</span></div>
 </pre></div>
 
