@@ -16,19 +16,19 @@ from scipy.interpolate import interp1d
 class Artery(object):
     """
     Class representing an artery.
+    
+    :param pos: Artery ID
+    :param Ru: Upstream radius
+    :param Rd: Downstream radius
+    :param lam: Length-to-radius (upstream) ratio 
+    :param k: Iterable containing elasticity parameters k1, k2, k3
+    :param Re: Reynold's number
     """
         
         
     def __init__(self, pos, Ru, Rd, lam, k, Re):
         """
         Artery constructor.
-        
-        :param pos: Artery ID
-        :param Ru: Upstream radius
-        :param Rd: Downstream radius
-        :param lam: Length-to-radius (upstream) ratio 
-        :param k: Iterable containing elasticity parameters k1, k2, k3
-        :param Re: Reynold's number
         """
         self._pos = pos
         self._Ru = Ru
@@ -415,6 +415,9 @@ before setting initial conditions.')
                    
     @property
     def L(self):
+        """
+        Artery length
+        """
         return self._L
 
     @L.setter
@@ -423,48 +426,84 @@ before setting initial conditions.')
         
     @property
     def nx(self):
+        """
+        Number of spatial steps
+        """
         return self._nx
         
     @property
     def Ru(self):
+        """
+        Upstream radius
+        """
         return self._Ru
         
     @property
     def Rd(self):
+        """
+        Downstream radius
+        """
         return self._Rd
         
     @property
     def k(self):
+        """
+        Elasticity parameters for relation Eh/r = k1 * exp(k2*r) + k3
+        """
         return self._k
         
     @property
     def A0(self):
+        """
+        Area at rest
+        """
         return self._A0
         
     @property
     def dx(self):
+        """
+        Spatial step size
+        """
         return self._dx
     
     @property
     def pos(self):
+        """
+        Position in ArteryNetwork
+        """
         return self._pos
         
     @property
     def f(self):
+        """
+        f = 4/3 Eh/r
+        """
         return self._f
         
     @property
     def xgrad(self):
+        """
+        dr/dx
+        """
         return self._xgrad
         
     @property
     def df(self):
+        """
+        df/dr
+        """        
         return self._df
 
     @property
     def Re(self):
+        """
+        Reynold's number
+        """
         return self._Re
         
     @property
     def delta(self):
+        """
+        Boundary layer thickness
+        """
         return self._delta

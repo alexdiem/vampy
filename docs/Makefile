@@ -50,18 +50,20 @@ help:
 
 .PHONY: clean
 clean:
+	rm source/vampy.rst
+	rm source/modules.rst
 	rm -rf $(BUILDDIR)/*
 
 .PHONY: html
 html:
-	sphinx-apidoc -o ./source ../vampy
+	sphinx-apidoc -f -o ./source ../vampy
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 .PHONY: gh-pages
 gh-pages:
-	sphinx-apidoc -o ./source ../vampy
+	sphinx-apidoc -f -o ./source ../vampy
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	cp -R $(BUILDDIR)/html/* .
 	rm -R $(BUILDDIR)/html/*

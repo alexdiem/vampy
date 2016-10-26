@@ -2,3 +2,4 @@ dist/
 vampy/*.pyc
 VaMpy.egg-info/
 docs/build
+.spyder*

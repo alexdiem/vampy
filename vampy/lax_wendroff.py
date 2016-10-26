@@ -62,14 +62,21 @@ class LaxWendroff(object):
         
     @property   
     def theta(self):
+        """
+        dt/dx
+        """
         return self._theta
-        
         
     @property   
     def gamma(self):
+        """
+        dt/2
+        """
         return self._gamma
-        
         
     @property   
     def nx(self):
+        """
+        Number of spatial steps
+        """        
         return self._nx

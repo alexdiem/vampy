@@ -15,28 +15,28 @@ import sys
 class ArteryNetwork(object):
     """
     Class representing a network of arteries.
+    
+    :param Ru: Iterable containing upstream radii.
+    :param Rd: Iterable containing downstream radii.
+    :param lam: Iterable containing length-to-radius ratios.
+    :param k: Iterable containing elasticity parameters.
+    :param rho: Density of blood.
+    :param nu: Viscosity of blood.
+    :param p0: Zero transmural pressure.
+    :param depth: Depth of the arterial tree, e. g. 1 for one artery, 2 for three arteries.
+    :param ntr: Number of time steps in output.
+    :param Re: Reynolds number.
+    :param \**kwargs: See below
+      
+    :Keyword Arguments:
+        * *a* (``double``) -- Scaling factor for daughter vessel.
+        * *b* (``double``) -- Scaling factor for daughter vessel.
     """
     
     
     def __init__(self, Ru, Rd, lam, k, rho, nu, p0, depth, ntr, Re, **kwargs):
         """
-        ArteryNetwork constructor. Stores parameters and intialises Artery objects.
-        
-        :param Ru: Iterable containing upstream radii.
-        :param Rd: Iterable containing downstream radii.
-        :param lam: Iterable containing length-to-radius ratios.
-        :param k: Iterable containing elasticity parameters.
-        :param rho: Density of blood.
-        :param nu: Viscosity of blood.
-        :param p0: Zero transmural pressure.
-        :param depth: Depth of the arterial tree, e. g. 1 for one artery, 2 for three arteries.
-        :param ntr: Number of time steps in output.
-        :param Re: Reynolds number.
-        :param \**kwargs: See below
-        
-        :Keyword Arguments:
-            * *a* (``double``) -- Scaling factor for daughter vessel.
-            * *b* (``double``) -- Scaling factor for daughter vessel.
+        ArteryNetwork constructor.
         """
         self._depth = depth
         self._arteries = [0] * (2**depth - 1)
@@ -539,69 +539,103 @@ time step size." % (self.t))
                        
     @property
     def depth(self):
+        """
+        Network depth
+        """
         return self._depth
         
         
     @property
     def arteries(self):
+        """
+        List containing Artery objects
+        """
         return self._arteries
         
         
     @property
-    def nt(self):
-        return self._nt
-        
-        
-    @property
     def dt(self):
+        """
+        Time step size
+        """
         return self._dt
         
     
     @property        
     def tf(self):
+        """
+        Total simulation time
+        """
         return self._tf
         
         
     @property
     def T(self):
+        """
+        Period length
+        """
         return self._T
         
         
     @property
     def tc(self):
+        """
+        Number of periods in simulation
+        """
         return self._tc
         
         
     @property
     def t(self):
+        """
+        Current time
+        """
         return self._t
         
         
     @property
     def ntr(self):
+        """
+        Number of time steps in output
+        """
         return self._ntr
         
         
     @property
     def dtr(self):
+        """
+        Time step size in output
+        """
         return self._dtr
 
         
     @property
     def rho(self):
+        """
+        Density of blood
+        """
         return self._rho
 
     @property
     def nu(self):
+        """
+        Viscosity of blood
+        """
         return self._nu
         
 
     @property
     def p0(self):
+        """
+        Zero transmural pressure
+        """
         return self._p0
         
     @property
     def progress(self):
+        """
+        Simulation progress
+        """
         return self._progress
         
     @progress.setter
