@@ -3,3 +3,5 @@ vampy/*.pyc
 VaMpy.egg-info/
 docs/build
 .spyder*
+tests/__pycache__/
+.cache

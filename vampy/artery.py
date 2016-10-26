@@ -51,7 +51,7 @@ class Artery(object):
             raise AttributeError('Artery not meshed. Execute mesh(self, dx) \
 before setting initial conditions.')
         self.U0[0,:] = self.A0.copy()
-        self.U0[1,:].fill(0.0)
+        self.U0[1,:].fill(u0)
         
         
     def mesh(self, dx, ntr):

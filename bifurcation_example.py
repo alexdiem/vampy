@@ -53,7 +53,6 @@ def main(param):
     dx = s['dx'] / rc # spatial step size
     Ru = a['Rd'] / rc # artery radius upstream
     Rd = a['Rd'] / rc # artery radius downstream
-    L = Ru * a['lam'] # artery length
     nu = nu*rc/qc # viscosity
     kc = rho*qc**2/rc**4
     k = (a['k1']/kc, a['k2']*rc, a['k3']/kc) # elasticity model parameters (Eh/r)
