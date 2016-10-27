@@ -24,17 +24,19 @@ def parameter():
     nondim = [rc, qc, Re]
     
     # assign parameters
+    nu = nu*rc/qc
+    T = s['T'] * qc / rc**3
     Ru = a['Rd'][0] / rc # artery radius upstream
     Rd = a['Rd'][0] / rc # artery radius downstream
     kc = rho*qc**2/rc**4
     k = (a['k1']/kc, a['k2']*rc, a['k3']/kc) # elasticity model parameters (Eh/r)
     pos = 0
     lam = a['lam'][0]
-    return pos, Ru, Rd, lam, k, Re
+    return pos, Ru, Rd, lam, k, Re, nu, T
 
 
 def test_artery_init():
-    pos, Ru, Rd, lam, k, Re = parameter()
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
     artery = Artery(pos, Ru, Rd, lam, k, Re)
     assert artery.pos == pos
     assert artery.Ru == Ru
@@ -45,7 +47,7 @@ def test_artery_init():
     
     
 def test_initial_conditions():
-    pos, Ru, Rd, lam, k, Re = parameter()
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
     artery = Artery(pos, Ru, Rd, lam, k, Re)
     artery.mesh(10, 10)
     u0 = 0.5
@@ -55,7 +57,7 @@ def test_initial_conditions():
     
     
 def test_mesh():
-    pos, Ru, Rd, lam, k, Re = parameter()
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
     artery = Artery(pos, Ru, Rd, lam, k, Re)
     nx = 10    
     l = np.linspace(0, Ru*lam, nx)
@@ -71,118 +73,72 @@ def test_mesh():
     assert artery.P.shape == (ntr, nx)
     
     
-#def test_set_time():
-#    R, lam, sigma, rho, mu, beta, ntr = parameter()
-#    artery = Artery(R, lam, sigma, rho, mu, beta=beta, ntr=ntr)
-#    nt = 100
-#    dt = 0.0001
-#    artery.set_time(nt, dt)
-#    assert artery.nt == nt
-#    assert artery.dt == dt
-#    assert artery.T == 0.0
-#    
-#    
-#def test_p():
-#    R, lam, sigma, rho, mu, beta, ntr = parameter()
-#    artery = Artery(R, lam, sigma, rho, mu, beta=beta, ntr=ntr)
-#    assert artery.p(artery.A0) == artery.beta * (np.sqrt(artery.A0) -\
-#                np.sqrt(artery.A0))
-#    assert artery.p(100*artery.A0) == artery.beta * (np.sqrt(100*artery.A0) -\
-#                np.sqrt(artery.A0))
-#                
-#                
-#def test_wave_speed():
-#    R, lam, sigma, rho, mu, beta, ntr = parameter()
-#    artery = Artery(R, lam, sigma, rho, mu, beta=beta, ntr=ntr)
-#    assert artery.wave_speed(artery.A0) == np.sqrt(artery.beta *\
-#                np.sqrt(artery.A0)/(2*artery.rho))
-#    assert artery.wave_speed(100*artery.A0) == np.sqrt(artery.beta *\
-#                np.sqrt(100*artery.A0)/(2*artery.rho))
-#                
-#                
-#def test_inlet_bc():
-#    R, lam, sigma, rho, mu, beta, ntr = parameter()
-#    artery = Artery(R, lam, sigma, rho, mu, beta=beta, ntr=ntr)
-#    artery.mesh(10) 
-#    u0 = 0.43
-#    artery.initial_conditions(u0)
-#    artery.set_time(100, 0.1)
-#    u = 0.45
-#    a_in, u_in = artery.inlet_bc(artery.U0, u)
-#    assert u_in == u
-#    w2 = u0 - 4*artery.wave_speed(artery.A0)
-#    assert a_in == (u - w2)**4/64 * (artery.rho/artery.beta)**2
-#    
-#    
-#def test_outlet_bc():
-#    R, lam, sigma, rho, mu, beta, ntr = parameter()
-#    artery = Artery(R, lam, sigma, rho, mu, beta=beta, ntr=ntr)
-#    artery.mesh(10) 
-#    u0 = 0.43
-#    artery.initial_conditions(u0)
-#    artery.set_time(100, 0.1)
-#    a = artery.A0
-#    a_out, u_out = artery.outlet_bc(artery.U0, a)
-#    assert a_out == a
-#    w1 = u0 + 4*artery.wave_speed(artery.A0)
-#    assert u_out == w1 - 4*a**(1/4.) * np.sqrt(artery.beta/(2*artery.rho))
-#    
-#    
-#def test_cfl_condition():
-#    R, lam, sigma, rho, mu, beta, ntr = parameter()
-#    artery = Artery(R, lam, sigma, rho, mu, beta=beta, ntr=ntr)
-#    c = artery.wave_speed(artery.A0)
-#    artery.mesh(10)
-#    u0 = 0.43
-#    artery.initial_conditions(u0)
-#    dt = 1e-3
-#    nt = 100
-#    artery.set_time(nt, dt)
-#    cfl = artery.cfl_condition(artery.U0[:,0])
-#    v = (artery.U0[1,0] + c, artery.U0[1,0] - c)
-#    left = artery.dt/artery.dx
-#    right = np.power(np.absolute(v), -1)
-#    assert cfl != (left > right).any()
-#    
-#    
-#def test_F():
-#    R, lam, sigma, rho, mu, beta, ntr = parameter()
-#    artery = Artery(R, lam, sigma, rho, mu, beta=beta, ntr=ntr)
-#    artery.mesh(10)
-#    u0 = 0.43
-#    artery.initial_conditions(u0)
-#    f = artery.F(artery.U0)
-#    a, u = artery.U0
-#    assert (f == np.array([a*u, np.power(u,2) + artery.p(a)/artery.rho])).all()
-#    
-#    
-#def test_S():
-#    R, lam, sigma, rho, mu, beta, ntr = parameter()
-#    artery = Artery(R, lam, sigma, rho, mu, beta=beta, ntr=ntr)
-#    artery.mesh(10)
-#    u0 = 0.43
-#    artery.initial_conditions(u0)
-#    s = artery.S(artery.U0)
-#    a, u = artery.U0
-#    assert (s == np.array([u*0, -8*np.pi*artery.mu/artery.rho * u/a])).all()
-#    
-#    
-#def sine_inlet(t):
-#    return interp1d(t, np.sin(t))
-#    
-#    
-#def test_solve():
-#    R, lam, sigma, rho, mu, beta, ntr = parameter()
-#    artery = Artery(R, lam, sigma, rho, mu, beta=beta, ntr=ntr)
-#    nx = 10    
-#    artery.mesh(nx)
-#    u0 = 0.43
-#    artery.initial_conditions(u0)
-#    T = 0.85
-#    nt = 100
-#    artery.set_time(nt, 0.001, T)
-#    time = np.linspace(0,T,1000)
-#    u_in = sine_inlet(time)
-#    a, u = artery.solve(u0, u_in, 0.0, T)
-#    assert a.shape == (nt, nx)
-#    assert u.shape == (nt, nx)
+def test_boundary_layer_thickness():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    blt = np.sqrt(nu*T/(2*np.pi))
+    artery.boundary_layer_thickness(nu, T)
+    assert blt == artery.delta
+    
+    
+def test_p():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    p0 = artery.f[0] * (1 - np.sqrt(artery.A0[0]/artery.A0[0]))
+    p = artery.f * (1 - np.sqrt(artery.A0/artery.A0))
+    assert artery.p(artery.A0[0], j=0) == p0
+    assert (artery.p(artery.A0) == p).all()
+                
+                
+def test_wave_speed():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    c = -np.sqrt(0.5 * artery.f * np.sqrt(artery.A0/artery.A0))
+    assert (c == artery.wave_speed(artery.A0)).all()
+                
+                
+def test_F():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    artery.initial_conditions(0.43)
+    j = 0
+    k = 5
+    f = artery.F(artery.U0[:,j:k], j=j, k=k)
+    a, q = artery.U0[:,j:k]
+    assert (f == np.array([q, q*q/a + artery.f[j:k] * np.sqrt(artery.A0[j:k]*a)])).all()
+    
+    
+def test_S():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    artery.initial_conditions(0.43)
+    artery.boundary_layer_thickness(nu, T)
+    j = 0
+    k = 5
+    s = artery.S(artery.U0[:,j:k], j=j, k=k)
+    a, q = artery.U0[:,j:k]
+    R = np.sqrt(a/np.pi)
+    s0 = np.zeros((2,k))
+    s0[0,:].fill(0.0)
+    s0[1,:] =-2*np.pi*R*q/(artery.Re*artery.delta*a) +\
+                (2*np.sqrt(a) * (np.sqrt(np.pi)*artery.f[j:k] +\
+                np.sqrt(artery.A0[j:k])*artery.df[j:k]) -\
+                a*artery.df[j:k]) * artery.xgrad[j:k]
+    assert (s == s0).all()
+    
+    
+def test_dBdx():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    u0 = 0.43
+    j = 0
+    k = 5
+    artery.initial_conditions(u0)
+    f = artery.F(artery.U0[:,j:k], j=j, k=k)
+    a, q = artery.U0[:,j:k]
+    assert (f == np.array([q, q*q/a + artery.f[j:k] * np.sqrt(artery.A0[j:k]*a)])).all()

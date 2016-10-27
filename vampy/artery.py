@@ -164,6 +164,7 @@ before setting initial conditions.')
         """
         a, q = U
         out = np.empty_like(U)
+        out[0].fill(0.0)
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]
