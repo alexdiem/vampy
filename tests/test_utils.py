@@ -50,12 +50,6 @@ def test_read_config():
     assert len(simulation) == 2
     
     
-def test_read_csv():
-    u, t = read_csv("test_csv.csv")
-    assert u == [0.4353, 0.4326, 0.4286, 0.4246]
-    assert t == [0, 1, 2, 3]
-    
-    
 def test_periodic():
     T = 3.0
     assert equal(periodic(5.0, T), 2.0)

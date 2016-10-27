@@ -5,13 +5,6 @@ from vampy.lax_wendroff import *
 from scipy.interpolate import interp1d
 
 
-eps = 1e-5
-
-
-def equal(a, b):
-    return True if abs(a-b) < eps else False
-
-
 def parameter():
     # read config file
     f, a, s = utils.read_config("../bifurcation.cfg") 
