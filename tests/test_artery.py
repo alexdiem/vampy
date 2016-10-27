@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from vampy.artery import *
+from vampy.lax_wendroff import *
 from scipy.interpolate import interp1d
 
 
@@ -135,10 +136,85 @@ def test_dBdx():
     pos, Ru, Rd, lam, k, Re, nu, T = parameter()
     artery = Artery(pos, Ru, Rd, lam, k, Re)
     artery.mesh(0.1, 20)
-    u0 = 0.43
-    j = 0
-    k = 5
-    artery.initial_conditions(u0)
-    f = artery.F(artery.U0[:,j:k], j=j, k=k)
-    a, q = artery.U0[:,j:k]
-    assert (f == np.array([q, q*q/a + artery.f[j:k] * np.sqrt(artery.A0[j:k]*a)])).all()
+    artery.initial_conditions(0.43)
+    artery.boundary_layer_thickness(nu, T)
+    xi = artery.A0[-1]
+    dBdx = artery.dBdx(artery.L, xi)
+    assert dBdx == (2*np.sqrt(xi) * (np.sqrt(np.pi)*artery.f[-1] +\
+                    np.sqrt(artery.A0[-1])*artery.df[-1]) -\
+                    xi*artery.df[-1]) * artery.xgrad[-1]
+                    
+                    
+def test_dBdxi():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    artery.initial_conditions(0.43)
+    artery.boundary_layer_thickness(nu, T)
+    xi = artery.A0[-1]
+    dBdxi = artery.dBdxi(artery.L, xi)
+    assert dBdxi == artery.f[-1]/2 * np.sqrt(artery.A0[-1]/xi)
+    
+    
+def test_dBdxdxi():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    artery.initial_conditions(0.43)
+    artery.boundary_layer_thickness(nu, T)
+    xi = artery.A0[-1]
+    dBdxdxi = artery.dBdxdxi(artery.L, xi)
+    assert dBdxdxi == (1/(2*np.sqrt(xi)) * (artery.f[-1]*np.sqrt(np.pi) +\
+                    artery.df[-1]*np.sqrt(artery.A0[-1])) -\
+                    artery.df[-1]) * artery.xgrad[-1]
+                    
+                    
+def test_dFdxi2():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    artery.initial_conditions(0.43)
+    artery.boundary_layer_thickness(nu, T)
+    xi1 = xi2 = artery.A0[-1]
+    R0 = np.sqrt(xi1/np.pi)
+    dFdxi2 = artery.dFdxi2(artery.L, xi1, xi2)
+    assert dFdxi2 == 2*np.pi*R0*xi1/(artery.delta*artery.Re*xi2*xi2)
+    
+    
+def test_dFdxi1():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    artery.initial_conditions(0.43)
+    artery.boundary_layer_thickness(nu, T)
+    xi = artery.A0[-1]
+    R0 = np.sqrt(xi/np.pi)
+    dFdxi1 = artery.dFdxi1(artery.L, xi)
+    assert dFdxi1 == -2*np.pi*R0/(artery.delta*artery.Re*xi)
+    
+    
+def test_dpdx():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    artery.mesh(0.1, 20)
+    artery.initial_conditions(0.43)
+    artery.boundary_layer_thickness(nu, T)
+    xi = artery.A0[-1]
+    dpdx = artery.dpdx(artery.L, xi)
+    assert dpdx == artery.f[-1]/2 * np.sqrt(artery.A0[-1]/xi**3)
+    
+
+def test_solve():
+    pos, Ru, Rd, lam, k, Re, nu, T = parameter()
+    artery = Artery(pos, Ru, Rd, lam, k, Re)
+    dt = 0.0001
+    dx = 0.1
+    artery.mesh(dx, 20)
+    artery.initial_conditions(0.43)
+    artery.boundary_layer_thickness(nu, T)
+    U0 = artery.U0
+    lw = LaxWendroff(dt/dx, dt/2, artery.nx)
+    U_in = np.array([artery.A0[0], 0.43])
+    U_out = np.array([artery.A0[-1], 0.43])
+    artery.solve(lw, U_in, U_out, False, 0)
+    assert U0.shape == artery.U0.shape
