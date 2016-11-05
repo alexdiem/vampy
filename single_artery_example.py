@@ -26,11 +26,9 @@ def inlet(t, q0, tau):
                     bounds_error=False, fill_value=0.0)
 
 
-@profile
 def main(param):
     """
-    Example main.py for running a VaMpy model of a single artery without
-    bifurcations.
+    Example main.py for running a VaMpy model of a bifurcation.
     """
     
     # read config file
@@ -46,42 +44,45 @@ def main(param):
     
     # assign parameters
     run_id = f['run_id'] # run ID
+    f_inlet = f['inlet'] # inlet file
+    data_dir = f['data_dir'] # data directory
     T = s['T'] * qc / rc**3 # time of one cycle
     tc = s['tc'] # number of cycles to simulate
     tf = T * tc # total simulation time
     dt = s['dt'] * qc / rc**3 # time step size
-    ntr = int(tf/dt / 800) # number of time steps to be stored
+    ntr = 100 # number of time steps to be stored
     dx = s['dx'] / rc # spatial step size
     Ru = a['Rd'] / rc # artery radius upstream
     Rd = a['Rd'] / rc # artery radius downstream
-    L = Ru * a['lam'] # artery length
     nu = nu*rc/qc # viscosity
     kc = rho*qc**2/rc**4
     k = (a['k1']/kc, a['k2']*rc, a['k3']/kc) # elasticity model parameters (Eh/r)
     out_args = [a['R1']*rc**4/(qc*rho), a['R2']*rc**4/(qc*rho), 
             a['Ct']*rho*qc**2/rc**7] # Windkessel parameters
-    p0 = (80 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
+    p0 = (85 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
     
     # inlet boundary condition
-    Q = 20/qc
-    tau = 0.1*qc/rc**3
     t = np.linspace(0,T,200)
-    q_in = inlet(t, Q, tau)
-    
+    q0 = 20/qc
+    tau = 0.1 * qc / rc**3
+    q_in = inlet(t, q0, tau)
+
     # initialise artery network object
-    an = ArteryNetwork(Ru, Rd, a['lam'], k, rho, nu, p0, a['depth'],
-                       nondim, ntr)
+    an = ArteryNetwork(Ru, Rd, a['lam'], k, rho, nu, p0, a['depth'], ntr, Re)
     an.mesh(dx)
     an.set_time(dt, T, tc)
     u0 = q_in(0.0) # initial condition for flux
-    an.initial_conditions(u0)
+    an.initial_conditions(0.0)
     
     # run solver
     an.solve(q_in, out_args)
     
+    # redimensionalise
+    an.redimensionalise(rc, qc)
+    
     # save results
     an.dump_results(run_id, f['data_dir'])
-        
+
     
 if __name__ == "__main__":
     #warnings.filterwarnings("error")

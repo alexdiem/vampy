@@ -17,13 +17,13 @@ from vampy import *
 from vampy.artery_network import ArteryNetwork
 
 
-def inlet(t, qc, rc):
+def inlet(t, qc, rc, data_dir, f_inlet):
     """
     Function describing the inlet boundary condition. Returns a function.
     """
-    Q = np.loadtxt("./data/example_inlet.csv", delimiter=',')
+    Q = np.loadtxt("./%s/%s" % (data_dir, f_inlet), delimiter=',')
     t = [elem * qc / rc**3 for elem in Q[:,0]]
-    q = [elem / qc for elem in Q[:,1]]
+    q = [elem * 100 / qc for elem in Q[:,1]]
     return interp1d(t, q, kind='linear', bounds_error=False, fill_value=q[0])
 
 
@@ -45,11 +45,13 @@ def main(param):
     
     # assign parameters
     run_id = f['run_id'] # run ID
+    f_inlet = f['inlet'] # inlet file
+    data_dir = f['data_dir'] # data directory
     T = s['T'] * qc / rc**3 # time of one cycle
     tc = s['tc'] # number of cycles to simulate
     tf = T * tc # total simulation time
     dt = s['dt'] * qc / rc**3 # time step size
-    ntr = 200 # number of time steps to be stored
+    ntr = 100 # number of time steps to be stored
     dx = s['dx'] / rc # spatial step size
     Ru = a['Rd'] / rc # artery radius upstream
     Rd = a['Rd'] / rc # artery radius downstream
@@ -58,20 +60,18 @@ def main(param):
     k = (a['k1']/kc, a['k2']*rc, a['k3']/kc) # elasticity model parameters (Eh/r)
     out_args = [a['R1']*rc**4/(qc*rho), a['R2']*rc**4/(qc*rho), 
             a['Ct']*rho*qc**2/rc**7] # Windkessel parameters
-    p0 = (80 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
+    p0 = (0 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
     
     # inlet boundary condition
-    Q = 20/qc
-    tau = 0.1*qc/rc**3
     t = np.linspace(0,T,200)
-    q_in = inlet(t, qc, rc)
-    
+    q_in = inlet(t, qc, rc, data_dir, f_inlet)
+
     # initialise artery network object
     an = ArteryNetwork(Ru, Rd, a['lam'], k, rho, nu, p0, a['depth'], ntr, Re)
     an.mesh(dx)
     an.set_time(dt, T, tc)
     u0 = q_in(0.0) # initial condition for flux
-    an.initial_conditions(u0)
+    an.initial_conditions(0.0)
     
     # run solver
     an.solve(q_in, out_args)

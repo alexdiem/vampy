@@ -100,15 +100,19 @@ def main(param):
     tf = T*tc
     
     pos = 0
-    L = a['Ru'][pos]*a['lam'][pos]
+    #L = a['Ru'][pos]*a['lam'][pos]
+    L = a['Ru']*a['lam']
     
     P = np.loadtxt("%s/%s/p%d_%s.csv" % (data_dir, suffix, pos, suffix), delimiter=',')
+    U = np.loadtxt("%s/%s/u%d_%s.csv" % (data_dir, suffix, pos, suffix), delimiter=',')
     t = np.linspace(tf-T, tf, P.shape[1])
     x = np.linspace(0,L,P.shape[0])
     f = interpolate.interp2d(t, x, P, kind='linear')
+    g = interpolate.interp2d(t, x, U, kind='linear')
     
     x = np.linspace(0, L, len(t))
     P = f(t, x)
+    U = g(t, x)
     
     WIDTH = 510  # the number latex spits out
     FACTOR = 1.0  # the fraction of the width you'd like the figure to occupy
@@ -120,6 +124,7 @@ def main(param):
     fig_dims    = [fig_width_in, fig_height_in] # fig dims as a list
     
     vamplot.p3d_plot(fig_dims, suffix, plot_dir, t, P, L, pos)
+    vamplot.q3d_plot(fig_dims, suffix, plot_dir, t, U, L, pos)
     
     
 if __name__ == "__main__":
