@@ -100,8 +100,10 @@ def main(param):
     tf = T*tc
     
     pos = 0
-    #L = a['Ru'][pos]*a['lam'][pos]
-    L = a['Ru']*a['lam']
+    if type(a['Ru']) is float:
+        L = a['Ru']*a['lam']
+    else:
+        L = a['Ru'][pos]*a['lam'][pos]
     
     P = np.loadtxt("%s/%s/p%d_%s.csv" % (data_dir, suffix, pos, suffix), delimiter=',')
     U = np.loadtxt("%s/%s/u%d_%s.csv" % (data_dir, suffix, pos, suffix), delimiter=',')

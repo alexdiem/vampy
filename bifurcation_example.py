@@ -23,7 +23,7 @@ def inlet(t, qc, rc, data_dir, f_inlet):
     """
     Q = np.loadtxt("./%s/%s" % (data_dir, f_inlet), delimiter=',')
     t = [elem * qc / rc**3 for elem in Q[:,0]]
-    q = [elem * 100 / qc for elem in Q[:,1]]
+    q = [elem / qc for elem in Q[:,1]]
     return interp1d(t, q, kind='linear', bounds_error=False, fill_value=q[0])
 
 
@@ -51,7 +51,7 @@ def main(param):
     tc = s['tc'] # number of cycles to simulate
     tf = T * tc # total simulation time
     dt = s['dt'] * qc / rc**3 # time step size
-    ntr = 100 # number of time steps to be stored
+    ntr = 50 # number of time steps to be stored
     dx = s['dx'] / rc # spatial step size
     Ru = a['Rd'] / rc # artery radius upstream
     Rd = a['Rd'] / rc # artery radius downstream

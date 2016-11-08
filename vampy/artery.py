@@ -66,11 +66,9 @@ before setting initial conditions.')
             self.L = dx * (self.nx-1)
         X = np.linspace(0.0, self.L, self.nx)/self.L
         R = self.Ru * np.power((self.Rd/self.Ru), X)
-        #R = np.linspace(self.Rd, self.Ru, self.nx)
         self._A0 = R*R*np.pi
-        Ehr = self.k[0] * np.exp(self.k[1]*R) + self.k[2]
-        self._f = 4/3 * Ehr
-        self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
+        self._f = 4/3 * (self.k[0] * np.exp(self.k[1]*R) + self.k[2])
+        self._df = np.gradient(self.f, dx)
         self._xgrad = np.gradient(R, dx)
         self.U = np.zeros((2, ntr, self.nx))
         self.P = np.zeros((ntr, self.nx))
@@ -163,8 +161,7 @@ before setting initial conditions.')
             * *k* (``int``) -- Index variable (end)
         """
         a, q = U
-        out = np.empty_like(U)
-        out[0].fill(0.0)
+        out = np.zeros(U.shape)
         if 'j' in kwargs:
             j = kwargs['j']
             a0 = self.A0[j]

@@ -59,7 +59,7 @@ def main(param):
     k = (a['k1']/kc, a['k2']*rc, a['k3']/kc) # elasticity model parameters (Eh/r)
     out_args = [a['R1']*rc**4/(qc*rho), a['R2']*rc**4/(qc*rho), 
             a['Ct']*rho*qc**2/rc**7] # Windkessel parameters
-    p0 = (85 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
+    p0 = (0 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
     
     # inlet boundary condition
     t = np.linspace(0,T,200)
