@@ -25,7 +25,9 @@ python setup.py
 
 
 ---------------------------------------
-Solving a PDE
+Module Documentation
 ---------------------------------------
 
-Todo.
+The module documentation can be found on 
+
+[http://akdiem.github.io/vampy/](http://akdiem.github.io/vampy/)
