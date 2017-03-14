@@ -8,7 +8,11 @@ import sys
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
+
 from scipy import interpolate
+
+from os import makedirs
+from os.path import exists
 
 from vampy import vamplot
 from vampy import utils
@@ -98,6 +102,9 @@ def main(param):
     T = s['T']
     tc = s['tc']
     tf = T*tc
+    
+    if not exists("%s/%s" % (plot_dir, suffix)):
+        makedirs("%s/%s" % (plot_dir, suffix))
     
     pos = 0
     if type(a['Ru']) is float:

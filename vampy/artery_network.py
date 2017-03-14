@@ -538,8 +538,8 @@ time step size." % (self.t))
         :param suffix: Simulation identifier.
         :param data_dir: Directory to store CSV files in.
         """
-        if not exists(data_dir):
-            makedirs(data_dir)
+        if not exists("%s/%s" % (data_dir, suffix)):
+            makedirs("%s/%s" % (data_dir, suffix))
         for artery in self.arteries:
             artery.dump_results(suffix, data_dir)
                        
