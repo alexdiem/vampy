@@ -7,9 +7,12 @@ from scipy import linalg
 
 from artery import Artery
 from lax_wendroff import LaxWendroff
+
+from os import makedirs
+from os.path import exists
+
 import utils
 
-import sys
 
 
 class ArteryNetwork(object):
@@ -534,6 +537,8 @@ time step size." % (self.t))
         :param suffix: Simulation identifier.
         :param data_dir: Directory to store CSV files in.
         """
+        if not exists(data_dir):
+            makedirs(data_dir)
         for artery in self.arteries:
             artery.dump_results(suffix, data_dir)
                        
