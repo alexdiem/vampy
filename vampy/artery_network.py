@@ -11,6 +11,8 @@ from lax_wendroff import LaxWendroff
 from os import makedirs
 from os.path import exists
 
+import sys
+
 import utils
 
 
@@ -467,7 +469,6 @@ class ArteryNetwork(object):
         """
         for artery in self.arteries:
             artery.P = ((artery.P+self.p0) * self.rho*qc**2 / rc**4) / 1333.22365
-            print np.amax(artery.P)
             artery.U[0,:,:] = artery.U[0,:,:] * rc**2  
             artery.U[1,:,:] = artery.U[1,:,:] * qc
             

@@ -52,8 +52,7 @@ def read_config(fname):
     config.read(fname)
     # Files
     files = get_strings_section(config, 'Files')
-    # Geoemtry 
-    # get number of section containing "Geometry"
+    # Arteries
     arteries = get_numbers_section(config, 'Arteries')
     # Simulation 
     sim = get_numbers_section(config, 'Simulation')
