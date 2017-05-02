@@ -1,0 +1,225 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Setting up an artery simulation &#8212; Vascular Modelling in Python toolkit (VaMpy) 1.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="vampy package" href="vampy.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="setting-up-an-artery-simulation">
+<h1>Setting up an artery simulation<a class="headerlink" href="#setting-up-an-artery-simulation" title="Permalink to this headline">¶</a></h1>
+<p>Here, we show how an artery simulation is set up using VaMpy and explain the example files in the Git repository step by step. The example implements the simulations run by <a class="reference internal" href="#kolachalama2007" id="id1">[Kolachalama2007]</a> of the carotid bifurcation.</p>
+<p>Every simulation requires a cfg file containing the parameters for the simulation. The file is divided into three sections, titled Files, Arteries and Simulation. Each parameter in the file is explained below in Table 1.</p>
+<p>The file <code class="docutils literal"><span class="pre">bifurcation_example.py</span></code> is used as an example for running the simulation. First, parameters have to be imported from the cfg file</p>
+<p><code class="docutils literal"><span class="pre">f,</span> <span class="pre">a,</span> <span class="pre">s</span> <span class="pre">=</span> <span class="pre">utils.read_config(param)</span></code></p>
+<p>One variable is created for each section of the configuration file. The following two parts in <code class="docutils literal"><span class="pre">bifurcation_example.py</span></code> assign each parameter stored in the section variables to more intuitively named explicit variables. This step is optional, but recommended to ensure variables are not mixed up.</p>
+<p>The inlet boundary condition has to be supplied as a function taking time as its argument. The inlet parameter points to a CSV file containing data points of the inlet over one cardiac cycle. The function <code class="docutils literal"><span class="pre">inlet(qc,</span> <span class="pre">rc,</span> <span class="pre">data_dir,</span> <span class="pre">f_inlet)</span></code> returns a function that will then be used as the inlet boundary condition. The example inlet boundary condition is</p>
+<img alt="_images/inlet.png" src="_images/inlet.png" />
+<p>The remaining code in the simulation file initiates the relevant objects.</p>
+<p><code class="docutils literal"><span class="pre">an</span> <span class="pre">=</span> <span class="pre">ArteryNetwork(Ru,</span> <span class="pre">Rd,</span> <span class="pre">a['lam'],</span> <span class="pre">k,</span> <span class="pre">rho,</span> <span class="pre">nu,</span> <span class="pre">p0,</span> <span class="pre">a['depth'],</span> <span class="pre">ntr,</span> <span class="pre">Re)</span></code> creates an instance of an artery network, on which the simulation is run.</p>
+<p><code class="docutils literal"><span class="pre">an.mesh(dx)</span></code> uses the spatial step size dx to mesh arteries.</p>
+<p><code class="docutils literal"><span class="pre">an.set_time(dt,</span> <span class="pre">T,</span> <span class="pre">tc)</span></code> passes timing parameters to the simulation.</p>
+<p><code class="docutils literal"><span class="pre">u0</span> <span class="pre">=</span> <span class="pre">q_in(0.0)</span></code> is the initial condition for the flow rate in the artery. Usually this should be the value of the inlet function q_in at time 0.0 s.</p>
+<p><code class="docutils literal"><span class="pre">an.initial_conditions(u0)</span></code> applies the initial condition to the model.</p>
+<p>Simulations are run by calling the solver <code class="docutils literal"><span class="pre">an.solve(q_in,</span> <span class="pre">out_args)</span></code>, where out_args contains the Windkessel parameters for the outlet boundary condition.</p>
+<p>Finally, the solution variables should be returned to their dimensional state by calling <code class="docutils literal"><span class="pre">an.redimensionalise(rc,</span> <span class="pre">qc)</span></code>, before exporting results using <code class="docutils literal"><span class="pre">n.dump_results(run_id,</span> <span class="pre">f['data_dir'])</span></code>.</p>
+<p>In <code class="docutils literal"><span class="pre">plot_example.py</span></code> the use of the functions <code class="docutils literal"><span class="pre">vamplot.p3d_plot(fig_dims,</span> <span class="pre">suffix,</span> <span class="pre">plot_dir,</span> <span class="pre">t,</span> <span class="pre">P,</span> <span class="pre">L,</span> <span class="pre">pos)</span></code> and <code class="docutils literal"><span class="pre">vamplot.q3d_plot(fig_dims,</span> <span class="pre">suffix,</span> <span class="pre">plot_dir,</span> <span class="pre">t,</span> <span class="pre">U,</span> <span class="pre">L,</span> <span class="pre">pos)</span></code> to create 3D plots of the flow rate and pressure fields is demonstrated. Provided data has been written to files in the previous steps calling <code class="docutils literal"><span class="pre">python</span> <span class="pre">plot_example.py</span> <span class="pre">bifurcation.cfg</span></code> creates the following plots</p>
+<img alt="_images/q3d.png" src="_images/q3d.png" />
+<img alt="_images/p3d.png" src="_images/p3d.png" />
+<p><strong>Table 1:</strong> Parameters used in .cfg configuration files for VaMpy.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Files</strong></td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>inlet</td>
+<td>CSV file containing data points for the inlet boundary condition</td>
+</tr>
+<tr class="row-odd"><td>run_id</td>
+<td>Name for the simulation</td>
+</tr>
+<tr class="row-even"><td>data_dir</td>
+<td>Directory to store data files</td>
+</tr>
+<tr class="row-odd"><td>plot_dir</td>
+<td>Directory to store plots</td>
+</tr>
+<tr class="row-even"><td><strong>Arteries</strong></td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>Ru</td>
+<td>Upstream radii of each artery. If all radii are explicitly given they are comma-separated.</td>
+</tr>
+<tr class="row-even"><td>Rd</td>
+<td>Downstream radii of each artery. If all radii are explicitly given they are comma-separated.</td>
+</tr>
+<tr class="row-odd"><td>lam</td>
+<td>Length-to-radius ratio of each artery. If all radii are explicitly given they are comma-separated.</td>
+</tr>
+<tr class="row-even"><td>rc</td>
+<td>Characteristic radial scale</td>
+</tr>
+<tr class="row-odd"><td>qc</td>
+<td>Characteristic flow rate</td>
+</tr>
+<tr class="row-even"><td>rho</td>
+<td>Density of blood</td>
+</tr>
+<tr class="row-odd"><td>nu</td>
+<td>Viscosity of blood</td>
+</tr>
+<tr class="row-even"><td>k1</td>
+<td>Elasticity parameter of the artery wall, see <a class="reference internal" href="#olufsen2000" id="id2">[Olufsen2000]</a></td>
+</tr>
+<tr class="row-odd"><td>k2</td>
+<td>Elasticity parameter of the artery wall, see <a class="reference internal" href="#olufsen2000" id="id3">[Olufsen2000]</a></td>
+</tr>
+<tr class="row-even"><td>k3</td>
+<td>Elasticity parameter of the artery wall, see <a class="reference internal" href="#olufsen2000" id="id4">[Olufsen2000]</a></td>
+</tr>
+<tr class="row-odd"><td>R1</td>
+<td>First Windkessel resistance element</td>
+</tr>
+<tr class="row-even"><td>R2</td>
+<td>Second Windkessel resistance element</td>
+</tr>
+<tr class="row-odd"><td>Ct</td>
+<td>Windkessel compliance</td>
+</tr>
+<tr class="row-even"><td>depth</td>
+<td>Depth of the arterial tree</td>
+</tr>
+<tr class="row-odd"><td><strong>Simulation</strong></td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>T</td>
+<td>Length of a cardiac cycle</td>
+</tr>
+<tr class="row-odd"><td>tc</td>
+<td>Number of cardiac cycles to simulate</td>
+</tr>
+<tr class="row-even"><td>dt</td>
+<td>Time step size</td>
+</tr>
+<tr class="row-odd"><td>dx</td>
+<td>Spatial step size</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<table class="docutils citation" frame="void" id="kolachalama2007" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[Kolachalama2007]</a></td><td>Kolachalama V, Bressloff NW, Nair PB and Shearman CP (2007) Predictive Haemodynamics in a One-Dimensional Carotid Artery Bifurcation. Part I: Application to Stent Design. IEEE Transactions on Biomedical Engineering 54 (5): 802-812, doi 10.1109/TBME.2006.889188</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="olufsen2000" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[Olufsen2000]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id3">2</a>, <a class="fn-backref" href="#id4">3</a>)</em> Olufsen MS, Peskin CS, Kim WY, Pedersen EM, Nadim A and Larsen J (2000) Numerical Simulation and Experimental Validation of Blood Flow in Arteries with Structured-Tree Outflow Conditions 28 (11): 1281&#8211;1299, doi 10.1114/1.1326031</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Setting up an artery simulation</a><ul>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="vampy.html" title="previous chapter">vampy package</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/walkthrough.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Alexandra K. Diem.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/walkthrough.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
