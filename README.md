@@ -37,3 +37,10 @@ Module Documentation
 The module documentation can be found on 
 
 [http://akdiem.github.io/vampy/](http://akdiem.github.io/vampy/)
+
+
+---------------------------------------
+Artery setup walkthrough
+---------------------------------------
+
+The module documentation also contains a section on [setting up an artery simulation](http://akdiem.github.io/vampy/walkthrough.html), explaining parameters in the configuration file and code used to set up a simulation.
