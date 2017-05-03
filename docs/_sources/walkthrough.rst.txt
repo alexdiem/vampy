@@ -36,6 +36,17 @@ In ``plot_example.py`` the use of the functions ``vamplot.p3d_plot(fig_dims, suf
 .. image:: img/q3d.png
 .. image:: img/p3d.png
 
+It is most important to note that the plotting function can only take a 2D data array whose dimensions have the same lengths. Therefore, the following code is used to interpolate between data points in order to change the dimension of the data arrays, such that the spatial dimension is the same length as the time dimension.
+
+| ``from scipy import interpolate``
+| ``P = np.loadtxt("%s/%s/p%d_%s.csv" % (data_dir, suffix, pos, suffix), delimiter=',')``
+| ``t = np.linspace(tf-T, tf, P.shape[1])``
+| ``x = np.linspace(0,L,P.shape[0])``
+| ``f = interpolate.interp2d(t, x, P, kind='linear')``
+| ``g = interpolate.interp2d(t, x, U, kind='linear')``
+| ``x = np.linspace(0, L, len(t))``
+| ``P = f(t, x)``
+
 
 **Table 1:** Parameters used in .cfg configuration files for VaMpy.
 

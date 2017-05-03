@@ -63,6 +63,17 @@
 <p>In <code class="docutils literal"><span class="pre">plot_example.py</span></code> the use of the functions <code class="docutils literal"><span class="pre">vamplot.p3d_plot(fig_dims,</span> <span class="pre">suffix,</span> <span class="pre">plot_dir,</span> <span class="pre">t,</span> <span class="pre">P,</span> <span class="pre">L,</span> <span class="pre">pos)</span></code> and <code class="docutils literal"><span class="pre">vamplot.q3d_plot(fig_dims,</span> <span class="pre">suffix,</span> <span class="pre">plot_dir,</span> <span class="pre">t,</span> <span class="pre">U,</span> <span class="pre">L,</span> <span class="pre">pos)</span></code> to create 3D plots of the flow rate and pressure fields is demonstrated. Provided data has been written to files in the previous steps calling <code class="docutils literal"><span class="pre">python</span> <span class="pre">plot_example.py</span> <span class="pre">bifurcation.cfg</span></code> creates the following plots</p>
 <img alt="_images/q3d.png" src="_images/q3d.png" />
 <img alt="_images/p3d.png" src="_images/p3d.png" />
+<p>It is most important to note that the plotting function can only take a 2D data array whose dimensions have the same lengths. Therefore, the following code is used to interpolate between data points in order to change the dimension of the data arrays, such that the spatial dimension is the same length as the time dimension.</p>
+<div class="line-block">
+<div class="line"><code class="docutils literal"><span class="pre">from</span> <span class="pre">scipy</span> <span class="pre">import</span> <span class="pre">interpolate</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">P</span> <span class="pre">=</span> <span class="pre">np.loadtxt(&quot;%s/%s/p%d_%s.csv&quot;</span> <span class="pre">%</span> <span class="pre">(data_dir,</span> <span class="pre">suffix,</span> <span class="pre">pos,</span> <span class="pre">suffix),</span> <span class="pre">delimiter=',')</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">np.linspace(tf-T,</span> <span class="pre">tf,</span> <span class="pre">P.shape[1])</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">x</span> <span class="pre">=</span> <span class="pre">np.linspace(0,L,P.shape[0])</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">f</span> <span class="pre">=</span> <span class="pre">interpolate.interp2d(t,</span> <span class="pre">x,</span> <span class="pre">P,</span> <span class="pre">kind='linear')</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">g</span> <span class="pre">=</span> <span class="pre">interpolate.interp2d(t,</span> <span class="pre">x,</span> <span class="pre">U,</span> <span class="pre">kind='linear')</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">x</span> <span class="pre">=</span> <span class="pre">np.linspace(0,</span> <span class="pre">L,</span> <span class="pre">len(t))</span></code></div>
+<div class="line"><code class="docutils literal"><span class="pre">P</span> <span class="pre">=</span> <span class="pre">f(t,</span> <span class="pre">x)</span></code></div>
+</div>
 <p><strong>Table 1:</strong> Parameters used in .cfg configuration files for VaMpy.</p>
 <table border="1" class="docutils">
 <colgroup>
