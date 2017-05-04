@@ -46,6 +46,7 @@
   <div class="section" id="setting-up-an-artery-simulation">
 <h1>Setting up an artery simulation<a class="headerlink" href="#setting-up-an-artery-simulation" title="Permalink to this headline">¶</a></h1>
 <p>Here, we show how an artery simulation is set up using VaMpy and explain the example files in the Git repository step by step. The example implements the simulations run by <a class="reference internal" href="#kolachalama2007" id="id1">[Kolachalama2007]</a> of the carotid bifurcation, whose geometry is</p>
+<img alt="_images/geometry.png" src="_images/geometry.png" />
 <p>Every simulation requires a cfg file containing the parameters for the simulation. The file is divided into three sections, titled Files, Arteries and Simulation. Each parameter in the file is explained below in Table 1.</p>
 <p>The file <code class="docutils literal"><span class="pre">bifurcation_example.py</span></code> is used as an example for running the simulation. First, parameters have to be imported from the cfg file</p>
 <p><code class="docutils literal"><span class="pre">f,</span> <span class="pre">a,</span> <span class="pre">s</span> <span class="pre">=</span> <span class="pre">utils.read_config(param)</span></code></p>
