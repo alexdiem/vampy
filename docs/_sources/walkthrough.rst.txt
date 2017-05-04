@@ -29,7 +29,11 @@ The remaining code in the simulation file initiates the relevant objects.
 
 Simulations are run by calling the solver ``an.solve(q_in, out_args)``, where out\_args contains the Windkessel parameters for the outlet boundary condition.
 
-Finally, the solution variables should be returned to their dimensional state by calling ``an.redimensionalise(rc, qc)``, before exporting results using ``n.dump_results(run_id, f['data_dir'])``.
+Finally, the solution variables should be returned to their dimensional state by calling ``an.redimensionalise(rc, qc)``, before exporting results using ``n.dump_results(run_id, f['data_dir'])``. The latter function creates three CSV files per artery: one for pressure, cross-sectional area and flow rate. The latter two results are the solutions of the system of equations, whilst pressure is calculated via the state equation [Diem2007]_. These are stored in the data directory and can be read into 2D arrays (variable over time and space) using Numpy's ```loadtxt()``` function.
+
+
+Plotting results
+-----------
 
 In ``plot_example.py`` the use of the functions ``vamplot.p3d_plot(fig_dims, suffix, plot_dir, t, P, L, pos)`` and ``vamplot.q3d_plot(fig_dims, suffix, plot_dir, t, U, L, pos)`` to create 3D plots of the flow rate and pressure fields is demonstrated. Provided data has been written to files in the previous steps calling ``python plot_example.py bifurcation.cfg`` creates the following plots
 
@@ -43,7 +47,6 @@ It is most important to note that the plotting function can only take a 2D data 
 | ``t = np.linspace(tf-T, tf, P.shape[1])``
 | ``x = np.linspace(0,L,P.shape[0])``
 | ``f = interpolate.interp2d(t, x, P, kind='linear')``
-| ``g = interpolate.interp2d(t, x, U, kind='linear')``
 | ``x = np.linspace(0, L, len(t))``
 | ``P = f(t, x)``
 
@@ -89,4 +92,6 @@ References
 
 .. [Kolachalama2007] Kolachalama V, Bressloff NW, Nair PB and Shearman CP (2007) Predictive Haemodynamics in a One-Dimensional Carotid Artery Bifurcation. Part I: Application to Stent Design. IEEE Transactions on Biomedical Engineering 54 (5): 802-812, doi 10.1109/TBME.2006.889188
 
-.. [Olufsen2000] Olufsen MS, Peskin CS, Kim WY, Pedersen EM, Nadim A and Larsen J (2000) Numerical Simulation and Experimental Validation of Blood Flow in Arteries with Structured-Tree Outflow Conditions 28 (11): 1281--1299, doi 10.1114/1.1326031
+.. [Olufsen2000] Olufsen MS, Peskin CS, Kim WY, Pedersen EM, Nadim A and Larsen J (2000) Numerical Simulation and Experimental Validation of Blood Flow in Arteries with Structured-Tree Outflow Conditions. Annals of Biomedical Engineering 28 (11): 1281--1299, doi 10.1114/1.1326031
+
+.. [Diem2007] Diem AK and Bressloff NW (2017) VaMpy: A Python Package to Solve 1D Blood Flow Problems. Journal of Open Research Software, under review.

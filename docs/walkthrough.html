@@ -59,7 +59,9 @@
 <p><code class="docutils literal"><span class="pre">u0</span> <span class="pre">=</span> <span class="pre">q_in(0.0)</span></code> is the initial condition for the flow rate in the artery. Usually this should be the value of the inlet function q_in at time 0.0 s.</p>
 <p><code class="docutils literal"><span class="pre">an.initial_conditions(u0)</span></code> applies the initial condition to the model.</p>
 <p>Simulations are run by calling the solver <code class="docutils literal"><span class="pre">an.solve(q_in,</span> <span class="pre">out_args)</span></code>, where out_args contains the Windkessel parameters for the outlet boundary condition.</p>
-<p>Finally, the solution variables should be returned to their dimensional state by calling <code class="docutils literal"><span class="pre">an.redimensionalise(rc,</span> <span class="pre">qc)</span></code>, before exporting results using <code class="docutils literal"><span class="pre">n.dump_results(run_id,</span> <span class="pre">f['data_dir'])</span></code>.</p>
+<p>Finally, the solution variables should be returned to their dimensional state by calling <code class="docutils literal"><span class="pre">an.redimensionalise(rc,</span> <span class="pre">qc)</span></code>, before exporting results using <code class="docutils literal"><span class="pre">n.dump_results(run_id,</span> <span class="pre">f['data_dir'])</span></code>. The latter function creates three CSV files per artery: one for pressure, cross-sectional area and flow rate. The latter two results are the solutions of the system of equations, whilst pressure is calculated via the state equation <a class="reference internal" href="#diem2007" id="id2">[Diem2007]</a>. These are stored in the data directory and can be read into 2D arrays (variable over time and space) using Numpy&#8217;s <code class="docutils literal"><span class="pre">`loadtxt()`</span></code> function.</p>
+<div class="section" id="plotting-results">
+<h2>Plotting results<a class="headerlink" href="#plotting-results" title="Permalink to this headline">¶</a></h2>
 <p>In <code class="docutils literal"><span class="pre">plot_example.py</span></code> the use of the functions <code class="docutils literal"><span class="pre">vamplot.p3d_plot(fig_dims,</span> <span class="pre">suffix,</span> <span class="pre">plot_dir,</span> <span class="pre">t,</span> <span class="pre">P,</span> <span class="pre">L,</span> <span class="pre">pos)</span></code> and <code class="docutils literal"><span class="pre">vamplot.q3d_plot(fig_dims,</span> <span class="pre">suffix,</span> <span class="pre">plot_dir,</span> <span class="pre">t,</span> <span class="pre">U,</span> <span class="pre">L,</span> <span class="pre">pos)</span></code> to create 3D plots of the flow rate and pressure fields is demonstrated. Provided data has been written to files in the previous steps calling <code class="docutils literal"><span class="pre">python</span> <span class="pre">plot_example.py</span> <span class="pre">bifurcation.cfg</span></code> creates the following plots</p>
 <img alt="_images/q3d.png" src="_images/q3d.png" />
 <img alt="_images/p3d.png" src="_images/p3d.png" />
@@ -70,7 +72,6 @@
 <div class="line"><code class="docutils literal"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">np.linspace(tf-T,</span> <span class="pre">tf,</span> <span class="pre">P.shape[1])</span></code></div>
 <div class="line"><code class="docutils literal"><span class="pre">x</span> <span class="pre">=</span> <span class="pre">np.linspace(0,L,P.shape[0])</span></code></div>
 <div class="line"><code class="docutils literal"><span class="pre">f</span> <span class="pre">=</span> <span class="pre">interpolate.interp2d(t,</span> <span class="pre">x,</span> <span class="pre">P,</span> <span class="pre">kind='linear')</span></code></div>
-<div class="line"><code class="docutils literal"><span class="pre">g</span> <span class="pre">=</span> <span class="pre">interpolate.interp2d(t,</span> <span class="pre">x,</span> <span class="pre">U,</span> <span class="pre">kind='linear')</span></code></div>
 <div class="line"><code class="docutils literal"><span class="pre">x</span> <span class="pre">=</span> <span class="pre">np.linspace(0,</span> <span class="pre">L,</span> <span class="pre">len(t))</span></code></div>
 <div class="line"><code class="docutils literal"><span class="pre">P</span> <span class="pre">=</span> <span class="pre">f(t,</span> <span class="pre">x)</span></code></div>
 </div>
@@ -121,13 +122,13 @@
 <td>Viscosity of blood</td>
 </tr>
 <tr class="row-even"><td>k1</td>
-<td>Elasticity parameter of the artery wall, see <a class="reference internal" href="#olufsen2000" id="id2">[Olufsen2000]</a></td>
-</tr>
-<tr class="row-odd"><td>k2</td>
 <td>Elasticity parameter of the artery wall, see <a class="reference internal" href="#olufsen2000" id="id3">[Olufsen2000]</a></td>
 </tr>
-<tr class="row-even"><td>k3</td>
+<tr class="row-odd"><td>k2</td>
 <td>Elasticity parameter of the artery wall, see <a class="reference internal" href="#olufsen2000" id="id4">[Olufsen2000]</a></td>
+</tr>
+<tr class="row-even"><td>k3</td>
+<td>Elasticity parameter of the artery wall, see <a class="reference internal" href="#olufsen2000" id="id5">[Olufsen2000]</a></td>
 </tr>
 <tr class="row-odd"><td>R1</td>
 <td>First Windkessel resistance element</td>
@@ -158,6 +159,7 @@
 </tr>
 </tbody>
 </table>
+</div>
 <div class="section" id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
 <table class="docutils citation" frame="void" id="kolachalama2007" rules="none">
@@ -169,7 +171,13 @@
 <table class="docutils citation" frame="void" id="olufsen2000" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[Olufsen2000]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id3">2</a>, <a class="fn-backref" href="#id4">3</a>)</em> Olufsen MS, Peskin CS, Kim WY, Pedersen EM, Nadim A and Larsen J (2000) Numerical Simulation and Experimental Validation of Blood Flow in Arteries with Structured-Tree Outflow Conditions 28 (11): 1281&#8211;1299, doi 10.1114/1.1326031</td></tr>
+<tr><td class="label">[Olufsen2000]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id4">2</a>, <a class="fn-backref" href="#id5">3</a>)</em> Olufsen MS, Peskin CS, Kim WY, Pedersen EM, Nadim A and Larsen J (2000) Numerical Simulation and Experimental Validation of Blood Flow in Arteries with Structured-Tree Outflow Conditions. Annals of Biomedical Engineering 28 (11): 1281&#8211;1299, doi 10.1114/1.1326031</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="diem2007" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[Diem2007]</a></td><td>Diem AK and Bressloff NW (2017) VaMpy: A Python Package to Solve 1D Blood Flow Problems. Journal of Open Research Software, under review.</td></tr>
 </tbody>
 </table>
 </div>
@@ -184,6 +192,7 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Setting up an artery simulation</a><ul>
+<li><a class="reference internal" href="#plotting-results">Plotting results</a></li>
 <li><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
