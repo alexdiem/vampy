@@ -1,7 +1,9 @@
 Setting up an artery simulation
 ===============================
 
-Here, we show how an artery simulation is set up using VaMpy and explain the example files in the Git repository step by step. The example implements the simulations run by [Kolachalama2007]_ of the carotid bifurcation.
+Here, we show how an artery simulation is set up using VaMpy and explain the example files in the Git repository step by step. The example implements the simulations run by [Kolachalama2007]_ of the carotid bifurcation, whose geometry is
+
+.. img/geometry.png
 
 Every simulation requires a cfg file containing the parameters for the simulation. The file is divided into three sections, titled Files, Arteries and Simulation. Each parameter in the file is explained below in Table 1.
 
