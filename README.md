@@ -8,6 +8,14 @@ This is the README file for the project.
 
 
 ---------------------------------------
+Journal paper
+---------------------------------------
+A paper on the VaMpy Python package has been published in the Journal of Open Research Software. Whenever using VaMpy for your research, please cite it as
+
+Diem AK, Bressloff NW (2017) VaMpy: A Python Package to Solve 1D Blood Flow Problems. *Journal of Open Research Software* 5: 17, [http://doi.org/10.5334/jors.159](http://doi.org/10.5334/jors.159)
+
+
+---------------------------------------
 Installation
 ---------------------------------------
 
