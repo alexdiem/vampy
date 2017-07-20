@@ -35,8 +35,26 @@ source activate vampy
 The first command creates the Anaconda environment ```vampy``` which contains all required packages, whilst the second command sets the current terminal to use this environment. To install VaMpy run
 
 ```
-python setup.py
+python setup.py install
 ```
+
+
+---------------------------------------
+Running the example files
+---------------------------------------
+
+To execute one of the example files run
+
+```
+python bifurcation_example.py bifurcation.cfg
+```
+
+To plot the data created from the example run
+
+```
+python plot_example.py bifurcation.cfg
+```
+
 
 ---------------------------------------
 Module Documentation
