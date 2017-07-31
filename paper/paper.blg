@@ -1,0 +1,24 @@
+[0] Config.pm:340> INFO - This is Biber 2.4
+[0] Config.pm:343> INFO - Logfile is 'paper.blg'
+[33] biber:287> INFO - === Mon Jul 31, 2017, 10:08:16
+[111] Biber.pm:348> INFO - Reading 'paper.bcf'
+[231] Biber.pm:742> INFO - Found 17 citekeys in bib section 0
+[235] Biber.pm:3151> INFO - Processing section 0
+[259] Biber.pm:3308> INFO - Looking for bibtex format file 'vampy.bib' for section 0
+[338] bibtex.pm:1113> INFO - Decoding LaTeX character macros into UTF-8
+[407] bibtex.pm:974> INFO - Found BibTeX data source 'vampy.bib'
+[409] Utils.pm:147> WARN - Duplicate entry key: 'Sherwin2003a' in file 'vampy.bib', skipping ...
+[517] Utils.pm:147> WARN - ISBN '2040-7947' in entry 'Mynard2008' is invalid - run biber with '--validate_datamodel' for details.
+[557] Utils.pm:147> WARN - BibTeX subsystem: /tmp/n_eeBMURJU/vampy.bib_4504.utf8, line 6, warning: 172 characters of junk seen at toplevel
+[649] UCollate.pm:65> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[649] UCollate.pm:65> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[649] Biber.pm:3028> INFO - Sorting list 'none/global' of type 'entry' with scheme 'none' and locale 'en-US'
+[649] Biber.pm:3032> INFO - No sort tailoring available for locale 'en-US'
+[663] bbl.pm:519> INFO - Writing 'paper.bbl' with encoding 'ascii'
+[676] Utils.pm:147> WARN - The entry 'Olufsen2000' has characters which cannot be encoded in 'ascii'. Recoding problematic characters into macros.
+[707] Utils.pm:147> WARN - The entry 'Alastruey2007' has characters which cannot be encoded in 'ascii'. Recoding problematic characters into macros.
+[737] Utils.pm:147> WARN - The entry 'LeVeque1992' has characters which cannot be encoded in 'ascii'. Recoding problematic characters into macros.
+[751] Utils.pm:147> WARN - The entry 'Smith2002' has characters which cannot be encoded in 'ascii'. Recoding problematic characters into macros.
+[835] Utils.pm:147> WARN - The entry 'Bakker2016' has characters which cannot be encoded in 'ascii'. Recoding problematic characters into macros.
+[842] bbl.pm:615> INFO - Output to paper.bbl
+[842] Biber.pm:109> INFO - WARNINGS: 8

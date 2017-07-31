@@ -1,0 +1,57 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\abx@aux@sortscheme{none}
+\abx@aux@sortnamekeyscheme{global}
+\abx@aux@cite{Olufsen2000}
+\abx@aux@cite{Sherwin2003a}
+\abx@aux@cite{Alastruey2007}
+\abx@aux@cite{Kolachalama2007}
+\abx@aux@cite{Cousins2014}
+\abx@aux@cite{Diem2016a}
+\abx@aux@cite{LeVeque1992}
+\abx@aux@cite{Richtmyer1963}
+\abx@aux@cite{Smith2002}
+\abx@aux@cite{Azer2007}
+\abx@aux@cite{Itu2011}
+\abx@aux@cite{Mynard2008}
+\@writefile{toc}{\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax }
+\@writefile{lof}{\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax }
+\@writefile{lot}{\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax }
+\abx@aux@cite{Manini2015}
+\newlabel{eq:conservation}{{4}{}{}{equation.0.4}{}}
+\@writefile{lof}{\defcounter {refsection}{0}\relax }\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Example geometry of a bifurcation implemented in VaMpy. The example represents the common carotid artery (parent vessel) and its two daughter vessels, which are used for validation purposes of the software. Artery segments have an upstream and downstream radius, where the downstream radius has to be equal to or smaller than the upstream radius. The radius of the vessel then is $r_0(z) = R_u \cdot \qopname  \relax o{exp}( \qopname  \relax o{log}( R_d/R_u ) \tmspace  +\thickmuskip {.2777em} z/L )$. }}{}{figure.1}}
+\newlabel{fig:geometry}{{1}{}{Example geometry of a bifurcation implemented in VaMpy. The example represents the common carotid artery (parent vessel) and its two daughter vessels, which are used for validation purposes of the software. Artery segments have an upstream and downstream radius, where the downstream radius has to be equal to or smaller than the upstream radius. The radius of the vessel then is $r_0(z) = R_u \cdot \exp ( \log ( R_d/R_u ) \; z/L )$}{figure.1}{}}
+\abx@aux@cite{Devault2008}
+\@writefile{lof}{\defcounter {refsection}{0}\relax }\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Illustration of the LW method. The solution is fully known at time step $n$ (black circles) and we are looking for the solution at grid point $m$ at time step $n+1$ (white circle). To determine the unknown solution, two intermediate solutions at half grid points $m \pm 1/2$ and at half time step $n+1/2$ are determined from grid points $m-1$, $m$ and $m+1$ at current time step $n$. The intermediate solutions are then used in conjunction with the known solution at grid point $m$ and current time step $n$ to calculate the unknown solution at grid point $m$ and next time step $n+1$ \cite {Kolachalama2007}. }}{}{figure.2}}
+\newlabel{fig:laxwendroff}{{2}{}{Illustration of the LW method. The solution is fully known at time step $n$ (black circles) and we are looking for the solution at grid point $m$ at time step $n+1$ (white circle). To determine the unknown solution, two intermediate solutions at half grid points $m \pm 1/2$ and at half time step $n+1/2$ are determined from grid points $m-1$, $m$ and $m+1$ at current time step $n$. The intermediate solutions are then used in conjunction with the known solution at grid point $m$ and current time step $n$ to calculate the unknown solution at grid point $m$ and next time step $n+1$ \cite {Kolachalama2007}}{figure.2}{}}
+\newlabel{eq:lw_full}{{5}{}{}{equation.0.5}{}}
+\newlabel{eq:lw_half}{{6}{}{}{equation.0.6}{}}
+\newlabel{alg:outlet}{{1}{}{Iterative scheme to determine $\boldsymbol {U}_M^{n+1}$ using a 3WK boundary condition \cite {Kolachalama2007}. An initial guess is made for $p_M^{n+1}$, from which $q_M^{n+1} is calculated using \eqref {eq:3wk}$ and $A_M^{n+1}$ is calculated using the discretized mass conservation equation \eqref {eq:disc_mass}. Using $A_M^{n+1}$ the next iteration of $p_M^{n+1}$ is found via the state equation \eqref {eq:state}. The algorithm stops after $k_\text {max}$ iterations or when the difference between pressure estimates is less than the small threshold value $\epsilon $}{lstlisting.1}{}}
+\@writefile{lol}{\defcounter {refsection}{0}\relax }\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}Iterative scheme to determine $\boldsymbol  {U}_M^{n+1}$ using a 3WK boundary condition \cite {Kolachalama2007}. An initial guess is made for $p_M^{n+1}$, from which $q_M^{n+1} is calculated using \textup  {\hbox {\mathsurround \z@ \normalfont  (\ignorespaces \ref  {eq:3wk}\unskip \@@italiccorr )}}$ and $A_M^{n+1}$ is calculated using the discretized mass conservation equation \textup  {\hbox {\mathsurround \z@ \normalfont  (\ignorespaces \ref  {eq:disc_mass}\unskip \@@italiccorr )}}. Using $A_M^{n+1}$ the next iteration of $p_M^{n+1}$ is found via the state equation \textup  {\hbox {\mathsurround \z@ \normalfont  (\ignorespaces \ref  {eq:state}\unskip \@@italiccorr )}}. The algorithm stops after $k_\text  {max}$ iterations or when the difference between pressure estimates is less than the small threshold value $\epsilon $.}{}{lstlisting.1}}
+\abx@aux@cite{Olufsen1998}
+\newlabel{eq:3wk}{{9}{}{}{equation.0.9}{}}
+\newlabel{eq:state}{{11}{}{}{equation.0.11}{}}
+\newlabel{eq:disc_mass}{{12}{}{}{equation.0.12}{}}
+\newlabel{eq:newton}{{13}{}{}{equation.0.13}{}}
+\newlabel{alg:arterynetwork}{{2}{}{Setup routine for a network of arteries. The artery network is created as a binary tree and contains $2^{\text {depth}}-1$ arteries. At each depth level the up- and downstream radii of daughter vessels are calculated using the scaling parameters $a$ and $b$. Artery objects are then created for each new daughter vessel and stored in a list}{lstlisting.2}{}}
+\@writefile{lol}{\defcounter {refsection}{0}\relax }\@writefile{lol}{\contentsline {lstlisting}{\numberline {2}Setup routine for a network of arteries. The artery network is created as a binary tree and contains $2^{\text  {depth}}-1$ arteries. At each depth level the up- and downstream radii of daughter vessels are calculated using the scaling parameters $a$ and $b$. Artery objects are then created for each new daughter vessel and stored in a list.}{}{lstlisting.2}}
+\@writefile{lof}{\defcounter {refsection}{0}\relax }\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces One pulse in the common carotid artery using VaMpy: a) flow rate, b) pressure. Comparison with the results for the same simulation in \cite {Kolachalama2007} validates the implementation of the blood flow equations in VaMpy.}}{}{figure.3}}
+\newlabel{fig:bifurcation}{{3}{}{One pulse in the common carotid artery using VaMpy: a) flow rate, b) pressure. Comparison with the results for the same simulation in \cite {Kolachalama2007} validates the implementation of the blood flow equations in VaMpy}{figure.3}{}}
+\abx@aux@cite{Chnafa2016}
+\abx@aux@cite{Bakker2016}
