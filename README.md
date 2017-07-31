@@ -8,6 +8,14 @@ This is the README file for the project.
 
 
 ---------------------------------------
+Journal paper
+---------------------------------------
+A paper on the VaMpy Python package has been published in the Journal of Open Research Software. Whenever using VaMpy for your research, please cite it as
+
+Diem AK, Bressloff NW (2017) VaMpy: A Python Package to Solve 1D Blood Flow Problems. *Journal of Open Research Software* 5: 17, [http://doi.org/10.5334/jors.159](http://doi.org/10.5334/jors.159)
+
+
+---------------------------------------
 Installation
 ---------------------------------------
 
@@ -27,8 +35,26 @@ source activate vampy
 The first command creates the Anaconda environment ```vampy``` which contains all required packages, whilst the second command sets the current terminal to use this environment. To install VaMpy run
 
 ```
-python setup.py
+python setup.py install
 ```
+
+
+---------------------------------------
+Running the example files
+---------------------------------------
+
+To execute one of the example files run
+
+```
+python bifurcation_example.py bifurcation.cfg
+```
+
+To plot the data created from the example run
+
+```
+python plot_example.py bifurcation.cfg
+```
+
 
 ---------------------------------------
 Module Documentation
