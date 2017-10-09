@@ -62,6 +62,7 @@ Issues fixed and features added since latest release
 
 - added outlet boundary condition for constant pressure
 - made code Python 2-3 compatible using the cheat sheet on http://python-future.org/compatible_idioms.html
+- plots can now also be displayed instead of saved to file
 
 
 ---------------------------------------
