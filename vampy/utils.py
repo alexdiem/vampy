@@ -1,4 +1,4 @@
-import ConfigParser
+from configparser import ConfigParser
 import matplotlib.pylab as plt
 import numpy as np
 
@@ -47,7 +47,7 @@ def read_config(fname):
     
     :param fname: Filename of the configuration file.
     """
-    config = ConfigParser.SafeConfigParser()
+    config = ConfigParser()
     config.optionxform = str 
     config.read(fname)
     # Files
