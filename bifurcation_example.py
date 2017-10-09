@@ -17,13 +17,20 @@ from vampy import *
 from vampy.artery_network import ArteryNetwork
 
 
-def inlet(t, qc, rc, data_dir, f_inlet):
+def inlet(qc, rc, data_dir, f_inlet):
     """
     Function describing the inlet boundary condition. Returns a function.
     """
     Q = np.loadtxt("./%s/%s" % (data_dir, f_inlet), delimiter=',')
-    t = [elem * qc / rc**3 for elem in Q[:,0]]
+    t = [(elem) * qc / rc**3 for elem in Q[:,0]]
     q = [elem / qc for elem in Q[:,1]]
+    return interp1d(t, q, kind='linear', bounds_error=False, fill_value=q[0])
+
+
+def mca_inlet(data_dir, f_inlet, Ru, qc, T):
+    Q = np.loadtxt("./%s/%s" % (data_dir, f_inlet), delimiter=',')
+    t = [(elem/Q[-1,0]) * T for elem in Q[:,0]]
+    q = [elem*100*Ru**2*np.pi/qc for elem in Q[:,1]]
     return interp1d(t, q, kind='linear', bounds_error=False, fill_value=q[0])
 
 
@@ -60,11 +67,20 @@ def main(param):
     k = (a['k1']/kc, a['k2']*rc, a['k3']/kc) # elasticity model parameters (Eh/r)
     out_args = [a['R1']*rc**4/(qc*rho), a['R2']*rc**4/(qc*rho), 
             a['Ct']*rho*qc**2/rc**7] # Windkessel parameters
-    p0 = (80 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
+    out_bc = '3wk'
+    p0 = (0 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
     
     # inlet boundary condition
     t = np.linspace(0,T,200)
-    q_in = inlet(t, qc, rc, data_dir, f_inlet)
+    #q_in = mca_inlet(data_dir, f_inlet, Ru[0], qc, T)
+    q_in = inlet(qc, rc, data_dir, f_inlet)
+
+    #import matplotlib.pylab as plt
+    #plt.plot(t, q_in(t))
+    #plt.xlabel("time (s)")
+    #plt.ylabel("flow rate (cm^3/s)")
+    #plt.show()
+    #sys.exit()
 
     # initialise artery network object
     an = ArteryNetwork(Ru, Rd, a['lam'], k, rho, nu, p0, a['depth'], ntr, Re)
@@ -74,7 +90,7 @@ def main(param):
     an.initial_conditions(0.0)
     
     # run solver
-    an.solve(q_in, out_args)
+    an.solve(q_in, out_bc, out_args)
     
     # redimensionalise
     an.redimensionalise(rc, qc)

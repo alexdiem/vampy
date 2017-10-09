@@ -181,7 +181,7 @@ class ArteryNetwork(object):
      
     
     @staticmethod
-    def outlet_bc(artery, dt, R1, R2, Ct):
+    def outlet_wk3(artery, dt, R1, R2, Ct):
         """
         Function calculating the three-element Windkessel outlet boundary
         condition.
@@ -219,6 +219,34 @@ class ArteryNetwork(object):
                 break
             k += 1
         return np.array([a_out, q_out])
+    
+    
+    @staticmethod
+    def outlet_p(artery, dt, P):
+        """
+        Function calculating cross-sectional area and flow rate for a fixed
+        pressure outlet boundary condition.
+        
+        :param artery: Artery object of outlet artery
+        :param dt: time step size
+        :param P: outlet pressure
+        """
+        theta = dt/artery.dx
+        gamma = dt/2
+        U0_1 = artery.U0[:,-1]
+        U0_2 = artery.U0[:,-2]
+        a_n, q_n = U0_1
+        p_out = P # initial guess for p_out
+        a_out = (artery.A0[-1]*artery.f[-1]**2) / (artery.f[-1] - p_out)**2
+        U_np_mm = (U0_1 + U0_2)/2 -\
+                theta*(artery.F(U0_1, j=-1) - artery.F(U0_2, j=-2))/2 +\
+                gamma*(artery.S(U0_1, j=-1) + artery.S(U0_2, j=-2))/2
+        a_np_mp = 2*a_out - U_np_mm[0]
+        q_np_mp = (a_n - a_out)/theta + U_np_mm[1]
+        U_np_mp = np.array([a_np_mp, q_np_mp])
+        U_out = U0_1 - theta*(artery.F(U_np_mp, j=-1) - artery.F(U_np_mm, j=-1)) +\
+                gamma*(artery.S(U_np_mp, j=-1) + artery.S(U_np_mm, j=-1))
+        return U_out
         
         
     @staticmethod
@@ -412,7 +440,7 @@ class ArteryNetwork(object):
                 
     
     @staticmethod
-    def cfl_condition(artery, dt):
+    def cfl_condition(artery, dt, t):
         """
         Tests whether the CFL condition
         
@@ -429,7 +457,13 @@ class ArteryNetwork(object):
         v = [u + c, u - c]
         left = dt/artery.dx
         right = 1/np.absolute(v)
-        return False if (left > right).any() else True
+        try:
+            cfl = False if (left > right).any() else True
+        except ValueError:
+            raise ValueError("CFL condition not fulfilled at time %e. Reduce \
+time step size." % (t))
+            sys.exit(1) 
+        return cfl
         
         
     def get_daughters(self, parent):
@@ -473,11 +507,12 @@ class ArteryNetwork(object):
             artery.U[1,:,:] = artery.U[1,:,:] * qc
             
     
-    def solve(self, q_in, out_args):
+    def solve(self, q_in, out_bc, out_args):
         """
         ArteryNetwork solver. Assigns boundary conditions to Artery object in the arterial tree and calls their solvers.
         
         :param q_in: Function for flux at the inlet.
+        :param out_bc: Choice of outlet boundary conditions. '3wk' for windkessel, 'p' for constant pressure.
         :param out_args: Iterable containing outlet boundary condition parameters.
         """
         tr = np.linspace(self.tf-self.T, self.tf, self.ntr)
@@ -517,11 +552,14 @@ class ArteryNetwork(object):
                     
                 if artery.pos >= (len(self.arteries) - 2**(self.depth-1)):
                     # outlet boundary condition
-                    U_out = ArteryNetwork.outlet_bc(artery, self.dt, *out_args)
+                    if out_bc == '3wk':
+                        U_out = ArteryNetwork.outlet_wk3(artery, self.dt, *out_args)
+                    elif out_bc == 'p':
+                        U_out = ArteryNetwork.outlet_p(artery, self.dt, *out_args)
                 
                 artery.solve(lw, U_in, U_out, save, i-1)
                 
-                if ArteryNetwork.cfl_condition(artery, self.dt) == False:
+                if ArteryNetwork.cfl_condition(artery, self.dt, self.t) == False:
                     raise ValueError(
                             "CFL condition not fulfilled at time %e. Reduce \
 time step size." % (self.t))
