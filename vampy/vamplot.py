@@ -19,7 +19,6 @@ plt.rcParams['font.serif'] = ['Arial']
 
 
 def p3d_plot(fig_dims, time, P, L, pos, suffix='', plot_dir=''):
-    colours = ['#377eb8', '#4daf4a', '#984ea3', '#d95f02']
     fig = plt.figure(figsize=fig_dims)
     ax = fig.gca(projection='3d')
     nt = len(time)
@@ -44,7 +43,6 @@ def p3d_plot(fig_dims, time, P, L, pos, suffix='', plot_dir=''):
     
     
 def q3d_plot(fig_dims, time, U, L, pos, suffix='', plot_dir=''):
-    colours = ['#377eb8', '#4daf4a', '#984ea3', '#d95f02']
     fig = plt.figure(figsize=fig_dims)
     ax = fig.gca(projection='3d')
     nt = len(time)
