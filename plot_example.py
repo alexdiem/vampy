@@ -6,9 +6,6 @@ import numpy as np
 import matplotlib.pylab as plt
 import sys
 
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
-
 from scipy import interpolate
 
 from os import makedirs
@@ -23,73 +20,6 @@ plt.rcParams['ytick.labelsize'] = 9
 plt.rcParams['legend.fontsize'] = 9
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.serif'] = ['Arial']
-
-
-def spatial_plots(fig_dims, suffix, plot_dir, n):
-    rc, qc, Re = self.nondim
-    L = self.L * rc
-    nt = len(self.U[0,:,0])   
-    x = np.linspace(0, L, self.nx)
-    skip = int(nt/n)+1
-    u = ['a', 'q', 'p']
-    l = ['cm^2', 'cm^3/s', 'mmHg']
-    positions = range(0,nt-1,skip)
-    for i in range(2):
-        y = self.U[i,positions,:]
-        fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[i], self.pos)
-        Artery.plot(fig_dims, suffix, plot_dir, x, y, positions, "cm", l[i],
-                    fname)
-    y = self.P[positions,:] # convert to mmHg    
-    fname = "%s/%s_%s%d_spatial.png" % (plot_dir, suffix, u[2], self.pos)
-    Artery.plot(fig_dims, suffix, plot_dir, x, y, positions, "cm", l[2],
-                    fname)
-            
-            
-def time_plots(fig_dims, suffix, plot_dir, n, time):
-    rc, qc, Re = self.nondim
-    time = time * rc**3 / qc
-    skip = int(self.nx/n)+1
-    u = ['a', 'q', 'p']
-    l = ['cm^2', 'cm^3/s', 'mmHg']
-    positions = range(0,self.nx-1,skip)
-    for i in range(2):
-        y = self.U[i,:,positions]
-        fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[i], self.pos)
-        Artery.plot(fig_dims, suffix, plot_dir, time, y, positions, "t", l[i],
-                    fname)
-    y = np.transpose(self.P[:,positions])   
-    fname = "%s/%s_%s%d_time.png" % (plot_dir, suffix, u[2], self.pos)
-    Artery.plot(fig_dims, suffix, plot_dir, time, y, positions, "t", l[2],
-                    fname)
-                        
-                        
-def pq_plot(fig_dims, suffix, plot_dir):
-    L = len(self.P[0,:])-1
-    positions = [0, int(L/4), int(L/2), int(3*L/4), L]
-    y = np.transpose(self.P[:,positions])
-    x = self.U[1,:,positions]
-    fname = "%s/%s_%s%d_pq.png" % (plot_dir, suffix, 'pq', self.pos)
-    plt.figure(fig_dims)
-    labels = ['0', 'L/4', 'L/2', '3L/4', 'L']
-    for i in range(len(y[:,0])):
-        plt.plot(x[i,:], y[i,:], lw=1, color='k')
-    plt.xlabel('flux (cm^3/s)')
-    plt.ylabel('pressure (mmHg)')
-    plt.savefig(fname, dpi=600, bbox_inches='tight')
-            
-            
-def plot(fig_dims, suffix, plot_dir, x, y, labels, xlabel, ylabel, fname):
-    colours = ['#377eb8', '#4daf4a', '#984ea3', '#d95f02']
-    plt.figure(fig_dims)
-    s = y.shape
-    n = min(s)
-    for i in range(n):
-        plt.plot(x, y[i,:], label="%d" % (labels[i]), lw=2, color=colours[i])
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.xlim([min(x), max(x)])
-    plt.legend()
-    plt.savefig(fname, dpi=600, bbox_inches='tight')
 
 
 def main(param):
@@ -132,8 +62,8 @@ def main(param):
     fig_height_in = fig_width_in * golden_ratio   # figure height in inches
     fig_dims    = [fig_width_in, fig_height_in] # fig dims as a list
     
-    vamplot.p3d_plot(fig_dims, suffix, plot_dir, t, P, L, pos)
-    vamplot.q3d_plot(fig_dims, suffix, plot_dir, t, U, L, pos)
+    vamplot.p3d_plot(fig_dims, t, P, L, pos, suffix, plot_dir)
+    vamplot.q3d_plot(fig_dims, t, U, L, pos, suffix, plot_dir)
     
     
 if __name__ == "__main__":

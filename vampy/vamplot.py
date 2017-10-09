@@ -18,7 +18,7 @@ plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.serif'] = ['Arial']
 
 
-def p3d_plot(fig_dims, suffix, plot_dir, time, P, L, pos):
+def p3d_plot(fig_dims, time, P, L, pos, suffix='', plot_dir=''):
     colours = ['#377eb8', '#4daf4a', '#984ea3', '#d95f02']
     fig = plt.figure(figsize=fig_dims)
     ax = fig.gca(projection='3d')
@@ -36,11 +36,14 @@ def p3d_plot(fig_dims, suffix, plot_dir, time, P, L, pos):
     ax.set_xlim([min(time), max(time)])
     ax.set_ylim([min(x), max(x)])
     fig.colorbar(surf, shrink=0.5, aspect=5)
-    fname = "%s/%s/%s_p3d%d.png" % (plot_dir, suffix, suffix, pos)
-    fig.savefig(fname, dpi=600, bbox_inches='tight')
+    if plot_dir == '':
+        fig.show()
+    else:
+        fname = "%s/%s/%s_p3d%d.png" % (plot_dir, suffix, suffix, pos)
+        fig.savefig(fname, dpi=600, bbox_inches='tight')
     
     
-def q3d_plot(fig_dims, suffix, plot_dir, time, U, L, pos):
+def q3d_plot(fig_dims, time, U, L, pos, suffix='', plot_dir=''):
     colours = ['#377eb8', '#4daf4a', '#984ea3', '#d95f02']
     fig = plt.figure(figsize=fig_dims)
     ax = fig.gca(projection='3d')
@@ -58,5 +61,8 @@ def q3d_plot(fig_dims, suffix, plot_dir, time, U, L, pos):
     ax.set_xlim([min(time), max(time)])
     ax.set_ylim([min(x), max(x)])
     fig.colorbar(surf, shrink=0.5, aspect=5)
-    fname = "%s/%s/%s_q3d%d.png" % (plot_dir, suffix, suffix, pos)
-    fig.savefig(fname, dpi=600, bbox_inches='tight')
+    if plot_dir == '':
+        fig.show()
+    else:
+        fname = "%s/%s/%s_q3d%d.png" % (plot_dir, suffix, suffix, pos)
+        fig.savefig(fname, dpi=600, bbox_inches='tight')
