@@ -71,12 +71,6 @@ def main(param):
     #q_in = mca_inlet(data_dir, f_inlet, Ru[0], qc, T)
     q_in = inlet(qc, rc, data_dir, f_inlet)
 
-    #import matplotlib.pylab as plt
-    #plt.plot(t, q_in(t))
-    #plt.xlabel("time (s)")
-    #plt.ylabel("flow rate (cm^3/s)")
-    #plt.show()
-    #sys.exit()
 
     # initialise artery network object
     an = ArteryNetwork(Ru, Rd, a['lam'], k, rho, nu, p0, a['depth'], ntr, Re)
