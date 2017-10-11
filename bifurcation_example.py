@@ -14,7 +14,6 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from vampy import *
-from vampy.artery_network import ArteryNetwork
 
 
 def inlet(qc, rc, data_dir, f_inlet):
@@ -48,7 +47,6 @@ def main(param):
     rho = a['rho']
     nu = a['nu']
     Re = qc/(nu*rc)
-    nondim = [rc, qc, Re]
     
     # assign parameters
     run_id = f['run_id'] # run ID
@@ -56,7 +54,6 @@ def main(param):
     data_dir = f['data_dir'] # data directory
     T = s['T'] * qc / rc**3 # time of one cycle
     tc = s['tc'] # number of cycles to simulate
-    tf = T * tc # total simulation time
     dt = s['dt'] * qc / rc**3 # time step size
     ntr = 50 # number of time steps to be stored
     dx = s['dx'] / rc # spatial step size
@@ -71,7 +68,6 @@ def main(param):
     p0 = (0 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
     
     # inlet boundary condition
-    t = np.linspace(0,T,200)
     #q_in = mca_inlet(data_dir, f_inlet, Ru[0], qc, T)
     q_in = inlet(qc, rc, data_dir, f_inlet)
 
@@ -86,7 +82,6 @@ def main(param):
     an = ArteryNetwork(Ru, Rd, a['lam'], k, rho, nu, p0, a['depth'], ntr, Re)
     an.mesh(dx)
     an.set_time(dt, T, tc)
-    u0 = q_in(0.0) # initial condition for flux
     an.initial_conditions(0.0)
     
     # run solver
