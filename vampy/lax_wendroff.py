@@ -6,7 +6,7 @@ import sys
 import numpy as np
 from scipy.interpolate import interp1d
 
-import utils
+import vampy.utils as utils
 
 
 class LaxWendroff(object):

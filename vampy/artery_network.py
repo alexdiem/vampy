@@ -5,15 +5,14 @@ import numpy as np
 
 from scipy import linalg
 
-from artery import Artery
-from lax_wendroff import LaxWendroff
+from vampy.artery import Artery
+from vampy.lax_wendroff import LaxWendroff
+import vampy.utils as utils
 
 from os import makedirs
 from os.path import exists
 
 import sys
-
-import utils
 
 
 

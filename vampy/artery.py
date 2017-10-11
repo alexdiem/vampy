@@ -6,7 +6,7 @@ import numpy as np
 import sys
 import matplotlib.pylab as plt
 
-import utils
+import vampy.utils as utils
 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
