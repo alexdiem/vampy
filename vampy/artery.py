@@ -68,7 +68,7 @@ before setting initial conditions.')
         R = self.Ru * np.power((self.Rd/self.Ru), X)
         self._A0 = R*R*np.pi
         self._f = 4/3 * (self.k[0] * np.exp(self.k[1]*R) + self.k[2])
-        self._df = np.gradient(self.f, dx)
+        self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
         self._xgrad = np.gradient(R, dx)
         self.U = np.zeros((2, ntr, self.nx))
         self.P = np.zeros((ntr, self.nx))
