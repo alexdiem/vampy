@@ -45,11 +45,11 @@ class ArteryNetwork(object):
         self._depth = depth
         self._arteries = [0] * (2**depth - 1)
         if depth == 1:
-            self.arteries[0] = Artery(0, Ru, Rd, lam, k, Re)
+            self.arteries[0] = Artery(0, Ru, Rd, lam, k, Re, p0)
         elif 'a' in kwargs:
-            self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k, Re)
+            self.setup_arteries_ab(Ru, Rd, kwargs['a'], kwargs['b'], lam, k, Re, p0)
         else:
-            self.setup_arteries(Ru, Rd, lam, k, Re)            
+            self.setup_arteries(Ru, Rd, lam, k, Re, p0)            
         self._t = 0.0
         self._ntr = ntr
         self._progress = 0
@@ -58,7 +58,7 @@ class ArteryNetwork(object):
         self._p0 = p0
         
         
-    def setup_arteries(self, Ru, Rd, lam, k, Re):
+    def setup_arteries(self, Ru, Rd, lam, k, Re, p0):
         """
         Creates Artery objects.
         
@@ -69,7 +69,7 @@ class ArteryNetwork(object):
         :param Re: Reynolds number.
         """
         for i in range(len(Ru)):
-            self.arteries[i] = Artery(i, Ru[i], Rd[i], lam[i], k, Re)
+            self.arteries[i] = Artery(i, Ru[i], Rd[i], lam[i], k, Re, p0)
         
         
     def setup_arteries_ab(self, Ru, Rd, a, b, lam, k, Re):
@@ -88,7 +88,7 @@ class ArteryNetwork(object):
         if type(Ru) == float:
             raise ValueError("Parameter depth has to be equal to 1 if only one artery is specified.")
         pos = 0
-        self.arteries[pos] = Artery(pos, Ru, Rd, lam, k, Re)
+        self.arteries[pos] = Artery(pos, Ru, Rd, lam, k, Re, p0)
         pos += 1
         radii_u = [Ru]
         radii_d = [Rd]
@@ -100,9 +100,9 @@ class ArteryNetwork(object):
                 rb_u = radii_u[i] * b
                 ra_d = radii_d[i] * a
                 rb_d = radii_d[i] * b
-                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, Re)
+                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, Re, p0)
                 pos += 1
-                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, Re)
+                self.arteries[pos] = Artery(pos, ra_u, ra_d, lam, k, Re, p0)
                 pos += 1
                 new_radii_u.append(ra_u)
                 new_radii_u.append(rb_u)
@@ -194,27 +194,27 @@ class ArteryNetwork(object):
         """
         theta = dt/artery.dx
         gamma = dt/2
-        U0_1 = artery.U0[:,-1]
-        U0_2 = artery.U0[:,-2]
-        U0_3 = artery.U0[:,-3]
+        U0_1 = artery.U0[:,-1] # m = M
+        U0_2 = artery.U0[:,-2] # m = M-1
+        U0_3 = artery.U0[:,-3] # m = M-2
         a_n, q_n = U0_1
-        p_out = p_o = artery.p(a_n, j=-1) # initial guess for p_out
-        U_np_mp = (U0_1 + U0_2)/2 -\
-                theta*(artery.F(U0_1, j=-1) - artery.F(U0_2, j=-2))/2 +\
-                gamma*(artery.S(U0_1, j=-1) + artery.S(U0_2, j=-2))/2
-        U_np_mm = (U0_2 + U0_3)/2 -\
-                theta*(artery.F(U0_2, j=-2) - artery.F(U0_3, j=-3))/2 +\
-                gamma*(artery.S(U0_2, j=-2) + artery.S(U0_3, j=-3))/2
+        p_new = p_n = artery.p(a_n, j=-1) # initial guess for p_out
+        U_np_mp = (U0_1 + U0_2)/2 +\
+                gamma * (-(artery.F(U0_1, j=-1) - artery.F(U0_2, j=-2))/artery.dx +\
+                        (artery.S(U0_1, j=-1) + artery.S(U0_2, j=-2))/2)
+        U_np_mm = (U0_2 + U0_3)/2 +\
+                gamma * (-(artery.F(U0_2, j=-2) - artery.F(U0_3, j=-3))/artery.dx +\
+                        (artery.S(U0_2, j=-2) + artery.S(U0_3, j=-3))/2)
         U_mm = U0_2 - theta*(artery.F(U_np_mp, j=-2) - artery.F(U_np_mm, j=-2)) +\
                 gamma*(artery.S(U_np_mp, j=-2) + artery.S(U_np_mm, j=-2))
         k = 0
         X = dt/(R1*R2*Ct)
         while k < 1000:
-            p_old = p_o
-            q_out = X*p_out - X*(R1+R2)*q_n + (p_o-p_out)/R1 + q_n
+            p_old = p_new
+            q_out = X*p_n - X*(R1+R2)*q_n + (p_old-p_n)/R1 + q_n
             a_out = a_n - theta * (q_out - U_mm[1])
-            p_o = artery.p(a_out, j=-1)
-            if abs(p_old - p_o) < 1e-7:
+            p_new = artery.p(a_out, j=-1)
+            if abs(p_old - p_new) < 1e-7:
                 break
             k += 1
         return np.array([a_out, q_out])
@@ -277,15 +277,15 @@ class ArteryNetwork(object):
         Dfr[3,2] = -theta
         Dfr[4,5] = Dfr[5,8] = theta
         Dfr[0,2] = -2*theta*x[2]/x[11] + gamma*parent.dFdxi1(M12, x[11])
-        Dfr[0,11] = theta * ((x[2]/x[11])**2 - parent.dBdxi(M12,x[11])) +\
+        Dfr[0,11] = theta * (x[2]**2/x[11]**2 - parent.dBdxi(M12,x[11])) +\
                     gamma * (parent.dFdxi2(M12, x[2], x[11]) +\
                             parent.dBdxdxi(M12, x[11]))
         Dfr[1,5] = 2*theta*x[5]/x[14] + gamma*d1.dFdxi1(D1_12, x[14])
-        Dfr[1,14] = theta * (-(x[5]/x[14])**2 + d1.dBdxi(D1_12,x[14])) +\
+        Dfr[1,14] = theta * (-x[5]**2/x[14]**2 + d1.dBdxi(D1_12,x[14])) +\
                     gamma * (d1.dFdxi2(D1_12, x[5], x[14]) +\
                             d1.dBdxdxi(D1_12, x[14]))
         Dfr[2,8] = 2*theta*x[8]/x[17] + gamma*d2.dFdxi1(D2_12, x[17])
-        Dfr[2,17] = theta * (-(x[8]/x[17])**2 + d2.dBdxi(D2_12,x[17])) +\
+        Dfr[2,17] = theta * (-x[8]**2/x[17]**2 + d2.dBdxi(D2_12,x[17])) +\
                     gamma * (d2.dFdxi2(D2_12, x[8], x[17]) +\
                             d2.dBdxdxi(D2_12, x[17]))
         Dfr[14,10] = zeta7
@@ -501,7 +501,7 @@ time step size." % (t))
         :param qc: Characteristic flux.
         """
         for artery in self.arteries:
-            artery.P = ((artery.P+self.p0) * self.rho*qc**2 / rc**4) / 1333.22365
+            artery.P = (artery.P * self.rho*qc**2 / rc**4) / 1333.22365
             artery.U[0,:,:] = artery.U[0,:,:] * rc**2  
             artery.U[1,:,:] = artery.U[1,:,:] * qc
             

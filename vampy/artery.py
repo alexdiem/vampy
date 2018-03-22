@@ -26,7 +26,7 @@ class Artery(object):
     """
         
         
-    def __init__(self, pos, Ru, Rd, lam, k, Re):
+    def __init__(self, pos, Ru, Rd, lam, k, Re, p0):
         """
         Artery constructor.
         """
@@ -36,6 +36,7 @@ class Artery(object):
         self._L = Ru*lam
         self._k = k
         self._Re = Re
+        self._p0 = p0
         
         
     def initial_conditions(self, u0):
@@ -64,12 +65,12 @@ before setting initial conditions.')
         self._nx = int(self.L/dx)+1
         if self.nx-1 != self.L/dx:
             self.L = dx * (self.nx-1)
-        X = np.linspace(0.0, self.L, self.nx)/self.L
-        R = self.Ru * np.power((self.Rd/self.Ru), X)
-        self._A0 = R*R*np.pi
+        X = np.linspace(0.0, self.L, self.nx)
+        R = self.Ru * np.power((self.Rd/self.Ru), X/self.L)
+        self._A0 = np.power(R, 2)*np.pi
         self._f = 4/3 * (self.k[0] * np.exp(self.k[1]*R) + self.k[2])
         self._df = 4/3 * self.k[0] * self.k[1] * np.exp(self.k[1]*R)
-        self._xgrad = np.gradient(R, dx)
+        self._xgrad = (self.Ru * np.log(self.Rd/self.Ru) * np.power((self.Rd/self.Ru), X/self.L))/self.L
         self.U = np.zeros((2, ntr, self.nx))
         self.P = np.zeros((ntr, self.nx))
         self.U0 = np.zeros((2, self.nx))
@@ -100,9 +101,9 @@ before setting initial conditions.')
         """
         if 'j' in kwargs:
             j = kwargs['j']
-            p = self.f[j] * (1 - np.sqrt(self.A0[j]/a))
+            p = self.f[j] * (1 - np.sqrt(self.A0[j]/a)) + self.p0
         else:
-            p = self.f * (1 - np.sqrt(self.A0/a))
+            p = self.f * (1 - np.sqrt(self.A0/a)) + self.p0
         return p
         
 
@@ -143,7 +144,7 @@ before setting initial conditions.')
             f = self.f[j:k]
         else:
             raise IndexError("Required to supply at least one index in function F.")
-        out[1] = q*q/a + f * np.sqrt(a0*a)
+        out[1] = np.power(q, 2)/a + f * np.sqrt(a0*a)
         return out
         
         
@@ -177,8 +178,8 @@ before setting initial conditions.')
             df = self.df[j:k]
         else:
             raise IndexError("Required to supply at least one index in function S.")
-        R = np.sqrt(a/np.pi)
-        out[1] = -2*np.pi*R*q/(self.Re*self.delta*a) +\
+        R = np.sqrt(a0/np.pi)
+        out[1] = -(2*np.pi*R/(self.Re*self.delta)) * (q/a) +\
                 (2*np.sqrt(a) * (np.sqrt(np.pi)*f +\
                 np.sqrt(a0)*df) - a*df) * xgrad
         return out
@@ -270,7 +271,7 @@ before setting initial conditions.')
             df_l = utils.extrapolate(l, [x_0, x_1], [self.df[-2], self.df[-1]])   
             A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[-2], self.A0[-1]])  
             xgrad_l = utils.extrapolate(l, [x_0, x_1],
-                                        [self.xgrad[-2], self.xgrad[-1]])  
+                                        [self.xgrad[-2], self.xgrad[-1]])
         elif l < 0.0:
             x_0 = self.dx
             x_1 = 0.0
@@ -278,7 +279,7 @@ before setting initial conditions.')
             df_l = utils.extrapolate(l, [x_0, x_1], [self.df[1], self.df[0]])   
             A0_l = utils.extrapolate(l, [x_0, x_1], [self.A0[1], self.A0[0]])  
             xgrad_l = utils.extrapolate(l, [x_0, x_1],
-                                        [self.xgrad[1], self.xgrad[0]])  
+                                        [self.xgrad[1], self.xgrad[0]])
         elif l == self.L:
             f_l = self.f[-1]   
             df_l = self.df[-1]
@@ -317,7 +318,7 @@ before setting initial conditions.')
             R0_l = np.sqrt(self.A0[-1]/np.pi)
         else:
             R0_l = np.sqrt(self.A0[0]/np.pi)
-        return 2*np.pi*R0_l*xi1/(self.delta*self.Re*xi2*xi2)
+        return 2*np.pi*R0_l/(self.delta*self.Re) * xi1/(xi2*xi2)
         
         
     def dFdxi1(self, l, xi2):
@@ -344,7 +345,7 @@ before setting initial conditions.')
             R0_l = np.sqrt(self.A0[-1]/np.pi)
         else:
             R0_l = np.sqrt(self.A0[0]/np.pi)
-        return -2*np.pi*R0_l/(self.delta*self.Re*xi2)
+        return -2*np.pi*R0_l/(self.delta*self.Re) * 1/xi2
         
         
     def dpdx(self, l, xi):
@@ -505,3 +506,10 @@ before setting initial conditions.')
         Boundary layer thickness
         """
         return self._delta
+
+    @property
+    def p0(self):
+        """
+        Reynold's number
+        """
+        return self._p0
