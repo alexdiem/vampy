@@ -26,13 +26,6 @@ def inlet(qc, rc, data_dir, f_inlet):
     return interp1d(t, q, kind='linear', bounds_error=False, fill_value=q[0])
 
 
-def mca_inlet(data_dir, f_inlet, Ru, qc, T):
-    Q = np.loadtxt("./%s/%s" % (data_dir, f_inlet), delimiter=',')
-    t = [(elem/Q[-1,0]) * T for elem in Q[:,0]]
-    q = [elem*100*Ru**2*np.pi/qc for elem in Q[:,1]]
-    return interp1d(t, q, kind='linear', bounds_error=False, fill_value=q[0])
-
-
 def main(param):
     """
     Example main.py for running a VaMpy model of a bifurcation.
@@ -57,7 +50,7 @@ def main(param):
     dt = s['dt'] * qc / rc**3 # time step size
     ntr = 50 # number of time steps to be stored
     dx = s['dx'] / rc # spatial step size
-    Ru = a['Rd'] / rc # artery radius upstream
+    Ru = a['Ru'] / rc # artery radius upstream
     Rd = a['Rd'] / rc # artery radius downstream
     nu = nu*rc/qc # viscosity
     kc = rho*qc**2/rc**4
@@ -65,10 +58,9 @@ def main(param):
     out_args = [a['R1']*rc**4/(qc*rho), a['R2']*rc**4/(qc*rho), 
             a['Ct']*rho*qc**2/rc**7] # Windkessel parameters
     out_bc = '3wk'
-    p0 = (0 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
+    p0 = (85 * 1333.22365) * rc**4/(rho*qc**2) # zero transmural pressure
     
     # inlet boundary condition
-    #q_in = mca_inlet(data_dir, f_inlet, Ru[0], qc, T)
     q_in = inlet(qc, rc, data_dir, f_inlet)
 
 
